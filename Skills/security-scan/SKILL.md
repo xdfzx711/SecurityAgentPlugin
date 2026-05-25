@@ -1,262 +1,212 @@
 ---
 name: security-scan
-description: "Multi-agent security vulnerability scanning, verification, and PoC validation for codebases. Deploys teams of senior security engineers to systematically discover vulnerabilities (including 0-day), verify findings through multi-round cross-checking, and produce coding proofs or analysis documentation. Use when the user asks to: (1) scan a project for security vulnerabilities, (2) perform security audit with multiple agents, (3) verify or validate known vulnerabilities, (4) write PoC exploits for discovered vulnerabilities, (5) conduct multi-agent security research, or mentions 'security scan', 'vulnerability scan', 'security audit', '安全扫描', '漏洞扫描', '漏洞挖掘', '安全审计', '0-day', 'zero-day'."
+description: "Multi-agent security vulnerability scanning, verification, and PoC validation for codebases and AI/ML platform integrations. Use when the user asks for a security scan, vulnerability scan, security audit, 0-day research, PoC validation, AI/ML platform security review, GPU platform security review, interface enumeration, boundary modeling, suspicious pattern reporting, or analysis of third-party ML components such as MLflow, Ray, Jupyter, Dask, Open WebUI, Kubeflow, Triton, Prometheus/DCGM, MinIO, dashboards, runtimes, artifact stores, telemetry endpoints, streaming connectors, or management APIs."
 ---
 
-# Security Scan - Multi-Agent Vulnerability Audit
+# Security Scan
 
-Three-phase security audit pipeline using agent teams. Each phase builds on the previous phase's output.
+Run a multi-agent security audit pipeline. The default workflow has three phases:
 
-## Phase Overview
+1. Discovery: scan the target and produce candidate findings.
+2. Verification: cross-check findings through independent review.
+3. Validation: produce PoC code or a verification guide for confirmed issues.
 
-1. **Discovery** — Scan codebase, find vulnerabilities (including 0-day)
-2. **Verification** — Two-round cross-verification of discovered vulnerabilities
-3. **Validation** — PoC coding or analysis documentation for confirmed vulnerabilities
+For detailed phase instructions, load only the relevant reference:
 
-## Pre-flight: Project Index Check
+- Discovery: [references/phase1-discovery.md](references/phase1-discovery.md)
+- Verification: [references/phase2-verification.md](references/phase2-verification.md)
+- Validation: [references/phase3-validation.md](references/phase3-validation.md)
+- Report templates: [references/report-templates.md](references/report-templates.md)
+- General vulnerability taxonomy: [references/vulnerability-categories.md](references/vulnerability-categories.md)
+- AI/ML interface boundary profile: [references/ai-ml-interface-boundary-scan.md](references/ai-ml-interface-boundary-scan.md)
 
-Before collecting configuration, check whether the target project has proper context files:
+## Profile Selection
 
-1. Use `Glob` to check if `{project_path}/CLAUDE.md` exists
-2. Use `Glob` to check if `{project_path}/.claude-index/` directory exists
+Before scanning, determine whether the task is a general code security audit or an AI/ML interface
+boundary audit.
 
-**If both exist** → Proceed to Quick Start. These files provide critical project context that agents will use during scanning.
+Use the general profile when the user asks for ordinary application, infrastructure, API, auth,
+crypto, injection, or logic vulnerability scanning.
 
-**If either is missing** → Use `AskUserQuestion`:
-```
-question: "项目缺少索引文件，是否先生成？ / Project is missing index files. Generate them first?"
-header: "Index"
-options:
-  - label: "Yes, generate with project-indexer (Recommended)"
-    description: "使用 project-indexer skill 生成 CLAUDE.md 和 .claude-index，帮助扫描Agent更好地理解项目结构"
-  - label: "Skip, scan without index"
-    description: "跳过索引生成，直接开始扫描（Agent对项目理解可能不够全面）"
-```
+Use the AI/ML Interface Boundary Profile when the target is an AI/ML platform, GPU compute
+platform, notebook platform, MLOps stack, model-serving platform, or a product integrating
+third-party AI/ML components. This includes MLflow, Ray, Jupyter, jupyter-server-proxy, Dask,
+Open WebUI, Kubeflow, Triton, Prometheus/DCGM, MinIO, object stores, runtime proxies, dashboards,
+job APIs, artifact registries, telemetry services, external model connectors, SSE streams, tool
+or function execution surfaces, and management APIs.
 
-If user chooses to generate:
-1. Invoke the `project-indexer` skill on the target project to create `CLAUDE.md` and `.claude-index/`
-2. Wait for completion, then proceed to Quick Start
+When using the AI/ML profile, load
+[references/ai-ml-interface-boundary-scan.md](references/ai-ml-interface-boundary-scan.md) and
+produce interface and boundary artifacts before making vulnerability claims.
 
-## Quick Start
+## Pre-Flight
 
-Before any scanning, use `AskUserQuestion` to collect configuration. Ask these in **one call** (up to 4 questions):
+Check whether the target project has useful context files:
 
-**Question 1 — Report Language:**
-```
-question: "报告使用什么语言？ / What language for reports?"
-header: "Language"
-options:
-  - label: "中文 (Recommended)"
-    description: "所有报告、分析文档使用中文撰写"
-  - label: "English"
-    description: "All reports and documentation in English"
-```
+1. `{project_path}/CLAUDE.md`
+2. `{project_path}/.claude-index/`
 
-**Question 2 — Team Identity:**
-```
-question: "选择安全团队背景 / Which security team to deploy?"
-header: "Team"
-options:
-  - label: "Google Security (Recommended)"
-    description: "Google Project Zero / Cloud Security 风格，擅长云原生、容器、基础设施安全"
-  - label: "Microsoft MSRC"
-    description: "Microsoft Security Response Center 风格，擅长系统级漏洞、内核安全、供应链安全"
-  - label: "Meta Red Team"
-    description: "Meta(Facebook) Red Team 风格，擅长Web安全、API安全、社交平台安全"
-  - label: "Apple Security Engineering"
-    description: "Apple SEAR 风格，擅长隐私安全、加密实现、移动端安全"
-```
+If both exist, instruct agents to read them before scanning. If either is missing, continue with
+direct repository exploration unless the user explicitly asks to generate an index first.
 
-**Question 3 — Phase Selection:**
-```
-question: "执行哪些阶段？ / Which phases to run?"
-header: "Phases"
-options:
-  - label: "Full Pipeline (1→2→3) (Recommended)"
-    description: "完整流水线：发现 → 验证 → 编码验证"
-  - label: "Phase 1 Only"
-    description: "仅执行漏洞发现扫描"
-  - label: "Phase 2+3 (have scan report)"
-    description: "已有扫描报告，从验证阶段开始"
-  - label: "Phase 3 Only (have verified report)"
-    description: "已有验证报告，仅执行编码验证"
+Collect or infer:
+
+- Target project path.
+- Report output directory, defaulting to `{project}/security-report/`.
+- Report language.
+- Phase selection: discovery only, verification only, validation only, or full pipeline.
+- Scan profile: general security audit or AI/ML interface boundary audit.
+
+## General Security Audit Workflow
+
+Use this workflow for ordinary vulnerability scanning.
+
+Phase 1 agent domains:
+
+- Authentication and authorization.
+- Input validation and injection.
+- Cryptography and secrets.
+- Container and infrastructure.
+- API and network security.
+- Logic, state, race conditions, and resource abuse.
+
+Use [references/vulnerability-categories.md](references/vulnerability-categories.md) for taxonomy and
+[references/phase1-discovery.md](references/phase1-discovery.md) for detailed instructions.
+
+Phase 1 output:
+
+```text
+{report_dir}/phase1-discovery/detail-reports/{agent-name}-scan-report.md
+{report_dir}/phase1-discovery/security-audit-final-report.md
 ```
 
-**Question 4 — Domain Expertise:**
-```
-question: "项目的技术领域？ / Project's technical domain?"
-header: "Domain"
-multiSelect: false
-options:
-  - label: "全领域自动扫描 (Recommended)"
-    description: "自动识别项目技术栈，覆盖所有相关安全领域，适合大多数项目"
-  - label: "Cloud Native / Container"
-    description: "Kubernetes, Docker, 微服务, Service Mesh, Helm, Istio, 容器编排, 镜像安全"
-  - label: "Web / API / Mobile"
-    description: "Web前后端, REST API, GraphQL, WebSocket, SPA, Android/iOS, 小程序"
-  - label: "System / Infra / Crypto"
-    description: "操作系统, 内核模块, 驱动开发, 加密实现, 区块链, 智能合约, PKI, 密钥管理"
+Phase 2 output:
+
+```text
+{report_dir}/phase2-verification/detail-reports/round1/{agent-name}-verify-r1.md
+{report_dir}/phase2-verification/detail-reports/round2/{agent-name}-verify-r2.md
+{report_dir}/phase2-verification/verification-final-report.md
 ```
 
-> Note: User can also select "Other" to specify custom domains like IoT/嵌入式, 数据库/中间件, AI/ML pipeline, 游戏安全, etc.
+Phase 3 output:
 
-After collecting answers, also ask for:
-- Target project path (if not already provided)
-- Report output directory (default: `{project}/security-report/`)
-
-### Applying Configuration
-
-Store user choices and propagate to all phases:
-
-- **Language** → Set `{report_language}` for all agent prompts and report templates. If Chinese: "所有报告使用中文撰写". If English: "All reports in English."
-- **Team Identity** → Set `{team_identity}` for agent persona prompts:
-  - Google: "You are a senior Google Project Zero / Cloud Security engineer..."
-  - Microsoft: "You are a senior Microsoft MSRC security researcher..."
-  - Meta: "You are a senior Meta Red Team security engineer..."
-  - Apple: "You are a senior Apple Security Engineering (SEAR) researcher..."
-- **Phases** → Determine which phases to execute
-- **Domain** → Set `{domain_focus}` for agent prompts:
-  - 全领域自动扫描: First explore the project structure (build files, dependencies, code patterns) to auto-detect the tech stack, then set domain focus accordingly. Cover all 6 vulnerability categories.
-  - Cloud Native / Container: Prioritize INFRA category, emphasize K8s RBAC, container escape, image security, network policies
-  - Web / API / Mobile: Prioritize INJ and API categories, emphasize XSS, SSRF, IDOR, auth flows, mobile-specific risks
-  - System / Infra / Crypto: Prioritize CRYPTO and LOGIC categories, emphasize memory safety, kernel exploits, crypto misuse, side-channels
-  - Other (user-specified): Adapt scan focus to the user's custom domain description
-
-## Output Directory Structure
-
-All phases write to a unified directory structure:
-
-```
-{report_dir}/
-├── phase1-discovery/
-│   ├── detail-reports/
-│   │   ├── {agent-name}-scan-report.md    # Individual agent reports
-│   │   └── ...
-│   └── security-audit-final-report.md     # Consolidated discovery report
-├── phase2-verification/
-│   ├── detail-reports/
-│   │   ├── round1/
-│   │   │   ├── {agent-name}-verify-r1.md
-│   │   │   └── ...
-│   │   └── round2/
-│   │       ├── {agent-name}-verify-r2.md
-│   │       └── ...
-│   └── verification-final-report.md       # Consolidated verification report
-├── phase3-validation/
-│   ├── poc/
-│   │   ├── {vuln-id}/
-│   │   │   ├── poc_exploit.{ext}          # PoC code
-│   │   │   ├── run_result.md              # Execution results
-│   │   │   └── validation-report.md       # Validation summary
-│   │   └── ...
-│   ├── analysis/
-│   │   ├── {vuln-id}/
-│   │   │   └── verification-guide.md      # Analysis for non-local-verifiable
-│   │   └── ...
-│   └── validation-final-report.md         # Final index & summary
-└── final-summary.md                       # Overall project summary (if all 3 phases)
+```text
+{report_dir}/phase3-validation/poc/{vuln-id}/
+{report_dir}/phase3-validation/analysis/{vuln-id}/
+{report_dir}/phase3-validation/validation-final-report.md
 ```
 
-## Phase 1: Discovery
+## AI/ML Interface Boundary Workflow
 
-See [references/phase1-discovery.md](references/phase1-discovery.md) for detailed instructions.
+Use this workflow when the user's goal is to scan AI/ML platform integration risks or third-party
+component interface exposure. The goal is to answer:
 
-**Summary:**
-1. Create team with 5-6 `general-purpose` agents in isolated worktrees
-2. Assign each agent a scan domain (see vulnerability categories in references)
-3. Each agent scans code and writes individual report to `phase1-discovery/detail-reports/`
-4. Team lead consolidates into `security-audit-final-report.md`
+```text
+Which interfaces are exposed, who should be able to access them, who may actually reach them,
+and what security boundary mismatch does that imply?
+```
 
-**Agent roles** — Distribute these scan domains across agents:
-- Authentication & Authorization (authn/authz bypass, privilege escalation)
-- Input Validation & Injection (command injection, SQL injection, XSS, path traversal)
-- Cryptography & Secrets (weak crypto, hardcoded credentials, key management)
-- Container & Infrastructure (container escape, misconfig, insecure defaults)
-- API & Network (SSRF, CORS, rate limiting, protocol vulnerabilities)
-- Logic & Race Conditions (TOCTOU, business logic flaws, resource exhaustion)
+Phase 1 must run the four-module pipeline from
+[references/ai-ml-interface-boundary-scan.md](references/ai-ml-interface-boundary-scan.md):
 
-## Phase 2: Verification
+1. Component Fingerprinter.
+2. Interface Enumerator.
+3. Boundary Analyzer.
+4. Suspicious Pattern Reporter.
 
-See [references/phase2-verification.md](references/phase2-verification.md) for detailed instructions.
+Recommended Phase 1 agent roles:
 
-**Summary:**
-1. Create team with 5-6 agents, each reads the Phase 1 final report
-2. **Round 1**: Each agent independently verifies assigned vulnerabilities against source code
-3. **Round 2**: Agents cross-review Round 1 results — each agent verifies another agent's findings
-4. Team lead consolidates into `verification-final-report.md`
+- Component fingerprinter: identify AI/ML components, versions, entrypoints, and deployment context.
+- Interface enumerator: enumerate API, Dashboard, Runtime, Artifact, Telemetry, Management,
+  Streaming, Auth/Admin, Model Serving, and Storage interfaces.
+- Boundary analyzer: compare expected authentication, authorization, exposure, and trust boundaries
+  with observed deployment and route behavior.
+- Suspicious pattern reporter: produce reviewable findings with evidence, possible impact, manual
+  validation, and safe testing notes.
+- Component specialists as needed: MLflow, Ray, Jupyter/jupyter-server-proxy, Dask, Open WebUI,
+  Kubeflow, Triton, Prometheus/DCGM, MinIO/S3, or other detected components.
 
-**Verification criteria per vulnerability:**
-- Can the vulnerable code path be reached?
-- Are there existing mitigations that prevent exploitation?
-- Is the severity rating accurate?
-- For 0-day: Is it truly novel (not a known CVE)?
+Primary Phase 1 outputs:
 
-## Phase 3: Validation
+```text
+{report_dir}/phase1-discovery/interface-enumeration-table.yaml
+{report_dir}/phase1-discovery/boundary-model-table.yaml
+{report_dir}/phase1-discovery/suspicious-pattern-report.md
+{report_dir}/phase1-discovery/detail-reports/{agent-name}-scan-report.md
+```
 
-See [references/phase3-validation.md](references/phase3-validation.md) for detailed instructions.
+The suspicious pattern taxonomy in the AI/ML profile is deliberately open-ended. Treat P1-P6 as
+seed patterns only:
 
-**Summary:**
-1. Create team with ~10 agents (can spawn multiple rounds until all vulns covered)
-2. Each agent reads Phase 1 + Phase 2 reports, claims specific vulnerabilities
-3. For each confirmed vulnerability, determine if local PoC is feasible:
-   - **Yes** → Write PoC code, execute, document results in `phase3-validation/poc/{vuln-id}/`
-   - **No** → Write analysis + verification guide in `phase3-validation/analysis/{vuln-id}/`
-4. Team lead produces `validation-final-report.md` as index of all results
+- Mixed Routing Authentication Coverage Gap.
+- Unsafe Default / Trusted-Internal Assumption.
+- Artifact / Registry Semantic Reuse Mismatch.
+- Runtime Proxy / WebSocket Auth Inconsistency.
+- Dashboard Management Endpoint Exposure.
+- External AI Backend Trust Confusion.
+
+Agents must also identify and name new pattern families when evidence shows a boundary mismatch
+outside those seeds. Examples include telemetry cross-tenant disclosure, model-serving control-plane
+exposure, gateway path normalization mismatch, confused identity propagation, route-method policy
+gaps, storage boundary drift, or external tool execution trust gaps.
+
+Do not overstate suspicious patterns as confirmed vulnerabilities. Use language such as suspected,
+possible, likely, or requires manual validation unless exploitability is proven.
+
+## Verification And Validation
+
+For general findings, use the standard Phase 2 and Phase 3 references.
+
+For AI/ML interface-boundary findings, verification should answer:
+
+- Is the interface actually reachable in the platform deployment?
+- Is authentication enforced for every route stack, protocol, and HTTP method?
+- Is authorization scoped to user, workspace, project, namespace, tenant, or admin role?
+- Does the interface change state or expose sensitive data?
+- Does the component rely on a trusted-network assumption that the platform violates?
+- Does external input, external backend output, artifact metadata, telemetry, or proxy routing cross
+  a trust boundary?
+
+Validation must remain non-destructive unless the user explicitly authorizes a controlled test
+environment. Prefer static analysis, route metadata, OpenAPI, frontend route extraction, safe GET,
+HEAD, and OPTIONS probes. Do not submit jobs, execute code, delete resources, shut down services,
+restart components, load or unload models, mutate registries, or read real user artifacts during
+automated discovery.
 
 ## Team Orchestration Pattern
 
-Each phase follows this pattern:
+For each phase:
 
-```
-1. TeamCreate with descriptive name (e.g., "security-scan-phase1")
-2. TaskCreate for each work item
-3. Spawn agents via Agent tool:
-   - subagent_type: "general-purpose"
-   - team_name: the team name
-   - Each agent gets a unique name (e.g., "scanner-authn", "scanner-injection")
-   - mode: "bypassPermissions" (agents need to read/write files freely)
-4. Assign tasks to agents via TaskUpdate
-5. Monitor progress, resolve blockers
-6. Consolidate results when all agents complete
-7. Shutdown agents via SendMessage type: "shutdown_request"
-8. TeamDelete to clean up
-```
+1. Create a team with a descriptive name such as `security-scan-phase1`.
+2. Create one task per scan domain, module, component, or finding group.
+3. Spawn agents with isolated worktrees when code changes or report writing may conflict.
+4. Give each agent the target path, report path, selected profile, language, and relevant reference.
+5. Monitor progress and consolidate outputs after agents finish.
+6. Shut down agents and clean up the team.
 
-**Agent spawn template:**
+Agent prompt essentials:
 
-```
-Agent tool call:
-  subagent_type: "general-purpose"
-  name: "{role-name}"
-  team_name: "{team-name}"
-  isolation: "worktree"
-  prompt: |
-    You are a senior {team_identity} with deep expertise in {domain}.
-    Your task: {specific task description}
-    Target project: {project_path}
-    Output your report to: {output_path}
-    Report language: {report_language}
+```text
+You are a senior security engineer.
+Target project: {project_path}
+Report directory: {report_dir}
+Selected profile: {general | ai-ml-interface-boundary}
+Assignment: {specific task}
 
-    ## IMPORTANT: Project Context Files
-    Before starting your scan, read these files to understand the project:
-    1. Read `{project_path}/CLAUDE.md` — project overview, architecture, conventions
-    2. Browse `{project_path}/.claude-index/` — code index with module structure, symbols, dependencies
-    These files give you a map of the codebase. Use them to quickly locate relevant
-    code areas for your scan domain instead of blindly searching.
+Read project context files first if present:
+- {project_path}/CLAUDE.md
+- {project_path}/.claude-index/
 
-    {phase-specific instructions from references}
+Read the relevant security-scan reference file before working.
+Write your report to the assigned output path.
+Every finding must include evidence, impact, confidence, and validation guidance.
 ```
 
 ## Report Quality Standards
 
-All reports target academic conference publication quality:
-
-- **Language**: Use `{report_language}` as selected by the user
-- **Evidence**: Every finding must cite specific file paths, line numbers, and code snippets
-- **Severity**: Use CVSS v3.1 scoring with clear justification
-- **Reproducibility**: Clear steps to reproduce each vulnerability
-- **Novelty**: 0-day findings must explain why they are not known CVEs
-- **References**: Link to relevant CWE, CVE, and academic literature where applicable
-
-See [references/report-templates.md](references/report-templates.md) for report format templates.
-See [references/vulnerability-categories.md](references/vulnerability-categories.md) for classification taxonomy.
+- Cite concrete evidence: files, lines, routes, configs, HTTP behavior, schemas, or deployment metadata.
+- Separate confirmed vulnerabilities from suspicious boundary mismatches.
+- Include confidence, severity, and assumptions.
+- Include safe manual validation steps.
+- Avoid destructive testing unless explicitly authorized.
+- For AI/ML interface reports, always include expected boundary vs observed boundary.
