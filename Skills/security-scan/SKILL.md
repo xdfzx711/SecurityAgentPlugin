@@ -1,6 +1,6 @@
 ---
 name: security-scan
-description: "Multi-agent security vulnerability scanning, verification, and PoC validation for codebases and AI/ML platform integrations. Use when the user asks for a security scan, vulnerability scan, security audit, 0-day research, PoC validation, AI/ML platform security review, GPU platform security review, interface enumeration, boundary modeling, suspicious pattern reporting, or analysis of third-party ML components such as MLflow, Ray, Jupyter, Dask, Open WebUI, Kubeflow, Triton, Prometheus/DCGM, MinIO, dashboards, runtimes, artifact stores, telemetry endpoints, streaming connectors, or management APIs."
+description: "Multi-agent security vulnerability scanning, verification, and PoC validation for codebases and AI/ML platform integrations. Use when the user asks for a security scan, vulnerability scan, security audit, 0-day research, PoC validation, AI/ML platform security review, GPU platform security review, interface enumeration, boundary modeling, candidate vulnerability reporting, or analysis of third-party ML components such as MLflow, Ray, Jupyter, Dask, Open WebUI, Kubeflow, Triton, Prometheus/DCGM, MinIO, dashboards, runtimes, artifact stores, telemetry endpoints, streaming connectors, or management APIs."
 ---
 
 # Security Scan
@@ -36,8 +36,10 @@ job APIs, artifact registries, telemetry services, external model connectors, SS
 or function execution surfaces, and management APIs.
 
 When using the AI/ML profile, load
-[references/ai-ml-interface-boundary-scan.md](references/ai-ml-interface-boundary-scan.md) and
-produce interface and boundary artifacts before making vulnerability claims.
+[references/ai-ml-interface-boundary-scan.md](references/ai-ml-interface-boundary-scan.md). Produce a
+single Chinese Phase 1 audit report as the primary user entrypoint, then produce a Phase 2 manual
+verification plan for each candidate vulnerability when the selected phases include verification or
+the full pipeline.
 
 ## Pre-Flight
 
@@ -112,7 +114,7 @@ Phase 1 must run the four-module pipeline from
 1. Component Fingerprinter.
 2. Interface Enumerator.
 3. Boundary Analyzer.
-4. Suspicious Pattern Reporter.
+4. Candidate Vulnerability Generator.
 
 Recommended Phase 1 agent roles:
 
@@ -121,22 +123,41 @@ Recommended Phase 1 agent roles:
   Streaming, Auth/Admin, Model Serving, and Storage interfaces.
 - Boundary analyzer: compare expected authentication, authorization, exposure, and trust boundaries
   with observed deployment and route behavior.
-- Suspicious pattern reporter: produce reviewable findings with evidence, possible impact, manual
-  validation, and safe testing notes.
+- Candidate vulnerability generator: convert boundary mismatches into concrete candidate
+  vulnerabilities with class, CWE, severity, score, confidence, evidence, possible impact, false
+  positive conditions, manual validation, and safe testing notes.
 - Component specialists as needed: MLflow, Ray, Jupyter/jupyter-server-proxy, Dask, Open WebUI,
   Kubeflow, Triton, Prometheus/DCGM, MinIO/S3, or other detected components.
 
-Primary Phase 1 outputs:
+Primary Phase 1 output:
 
 ```text
-{report_dir}/phase1-discovery/interface-enumeration-table.yaml
-{report_dir}/phase1-discovery/boundary-model-table.yaml
-{report_dir}/phase1-discovery/suspicious-pattern-report.md
-{report_dir}/phase1-discovery/detail-reports/{agent-name}-scan-report.md
+{report_dir}/phase1-discovery/ai-ml-candidate-vulnerability-report.md
 ```
 
-The suspicious pattern taxonomy in the AI/ML profile is deliberately open-ended. Treat P1-P6 as
-seed patterns only:
+The Phase 1 report must be written in Chinese by default and must combine the executive summary,
+candidate vulnerability list, interface enumeration summary, boundary analysis summary, candidate
+vulnerability details, manual validation preview, and embedded structured result appendix in one
+file. Do not make YAML files or detail reports the primary user-facing output. If raw intermediate
+artifacts are needed, place them under:
+
+```text
+{report_dir}/phase1-discovery/raw/
+```
+
+AI/ML Phase 2 output:
+
+```text
+{report_dir}/phase2-verification/ai-ml-manual-verification-plan.md
+```
+
+This Phase 2 report must include, for every candidate vulnerability, the concrete manual validation
+plan, evidence gaps, verification priority, safe and unsafe test boundaries, required environment,
+expected validation signals, false-positive checks, and final verification decision placeholder.
+
+The AI/ML profile still uses boundary-mismatch patterns internally, but final user-facing output
+must be concrete candidate vulnerabilities, not pattern-only findings. Treat P1-P6 as seed
+heuristics only:
 
 - Mixed Routing Authentication Coverage Gap.
 - Unsafe Default / Trusted-Internal Assumption.
@@ -145,13 +166,15 @@ seed patterns only:
 - Dashboard Management Endpoint Exposure.
 - External AI Backend Trust Confusion.
 
-Agents must also identify and name new pattern families when evidence shows a boundary mismatch
-outside those seeds. Examples include telemetry cross-tenant disclosure, model-serving control-plane
-exposure, gateway path normalization mismatch, confused identity propagation, route-method policy
-gaps, storage boundary drift, or external tool execution trust gaps.
+Agents must also identify candidate vulnerabilities outside those seeds when evidence supports a
+specific vulnerability hypothesis. Examples include telemetry cross-tenant disclosure, model-serving
+control-plane exposure, gateway path normalization mismatch, confused identity propagation,
+route-method policy gaps, storage boundary drift, or external tool execution trust gaps.
 
-Do not overstate suspicious patterns as confirmed vulnerabilities. Use language such as suspected,
-possible, likely, or requires manual validation unless exploitability is proven.
+Do not overstate candidate vulnerabilities as confirmed vulnerabilities. Use status values such as
+`candidate_requires_manual_validation`, `confirmed_by_non_destructive_probe`, or
+`needs_more_evidence`. Include a severity level and numeric score for prioritization, but make the
+confidence and manual validation requirements explicit.
 
 ## Verification And Validation
 
@@ -166,6 +189,10 @@ For AI/ML interface-boundary findings, verification should answer:
 - Does the component rely on a trusted-network assumption that the platform violates?
 - Does external input, external backend output, artifact metadata, telemetry, or proxy routing cross
   a trust boundary?
+
+For AI/ML profile Phase 2, create a manual verification plan even when live validation is not
+authorized. Do not require agents to prove exploitation during Phase 2. Instead, rank each candidate,
+list missing evidence, and give safe steps a human can run in an authorized environment.
 
 Validation must remain non-destructive unless the user explicitly authorizes a controlled test
 environment. Prefer static analysis, route metadata, OpenAPI, frontend route extraction, safe GET,
@@ -205,8 +232,10 @@ Every finding must include evidence, impact, confidence, and validation guidance
 ## Report Quality Standards
 
 - Cite concrete evidence: files, lines, routes, configs, HTTP behavior, schemas, or deployment metadata.
-- Separate confirmed vulnerabilities from suspicious boundary mismatches.
+- Separate confirmed vulnerabilities from candidate vulnerabilities that still require manual validation.
 - Include confidence, severity, and assumptions.
 - Include safe manual validation steps.
 - Avoid destructive testing unless explicitly authorized.
-- For AI/ML interface reports, always include expected boundary vs observed boundary.
+- For AI/ML interface reports, always include expected boundary vs observed boundary, severity,
+  score, confidence, vulnerability class, CWE when applicable, validation steps, and false-positive
+  conditions.

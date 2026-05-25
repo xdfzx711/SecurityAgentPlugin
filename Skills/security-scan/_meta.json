@@ -2,7 +2,7 @@
   "owner": "JR-Agent-Skills",
   "slug": "security-scan",
   "displayName": "Security Scan",
-  "description": "Multi-agent security vulnerability scanning, verification, PoC validation, and AI/ML interface-boundary analysis for platform-integrated ML components.",
+  "description": "Multi-agent security vulnerability scanning, verification, PoC validation, and AI/ML candidate vulnerability analysis for platform-integrated ML components.",
   "version": "1.0.0",
   "tags": ["security", "vulnerability", "scanning", "multi-agent", "audit", "0-day", "penetration-testing", "code-review", "ai-ml", "mlops", "gpu-platform", "interface-enumeration", "boundary-analysis"],
   "license": "MIT",
