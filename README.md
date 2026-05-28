@@ -14,8 +14,11 @@ SecurityAgentPlugin/
 
 ## Skills
 
-- **security-scan** - Multi-agent vulnerability scanning with structured discovery, verification,
-  validation, and AI/ML interface-boundary analysis for platform-integrated ML components.
+- **security-scan** - General multi-agent vulnerability scanning with structured discovery,
+  verification, and validation for codebases.
+- **aiml-interface-boundary-scan** - AI/ML third-party component interface-boundary scanning for GPU
+  compute platforms, focused on exposed interfaces, trust-boundary mismatches, and candidate
+  vulnerability verification planning.
 
 ## Status
 
