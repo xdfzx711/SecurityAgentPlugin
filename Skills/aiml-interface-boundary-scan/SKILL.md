@@ -31,6 +31,22 @@ Use general security knowledge only as supporting reasoning. Do not replace the 
 workflow with a generic scan for XSS, SQL injection, cryptography, dependency, or race-condition
 issues unless those issues arise from an AI/ML platform interface boundary mismatch.
 
+## Interface Map Handoff
+
+When a prior `aiml-interface-map` phase exists, treat it as the starting point for this boundary
+scan. Load these files before re-enumerating interfaces:
+
+```text
+{report_dir}/phase1-interface-map/{component_slug}_interface_map.md
+{report_dir}/phase1-interface-map/external_protection_dependency_map.md
+{report_dir}/phase1-interface-map/tenant_exposure_decision_map.md
+```
+
+Use the interface map to seed Interface Enumeration, Protection Assumption Mapping, and Tenant
+Exposure Classification. Do not duplicate the first phase's map output; convert its dangerous
+interfaces, external-protection dependencies, and tenant exposure decisions into boundary mismatch
+evidence and candidate vulnerability inputs.
+
 ## Default AI/ML Interface Boundary Workflow
 
 Use this workflow as the default process instead of the general security-scan
@@ -39,6 +55,7 @@ Use this workflow as the default process instead of the general security-scan
 ```text
 Component Fingerprinting
   -> Interface Enumeration
+  -> Runtime Interaction Mapping
   -> Boundary Modeling
   -> Candidate Vulnerability Generation
   -> Manual Verification Planning
@@ -48,16 +65,20 @@ Component Fingerprinting
 1. Component Fingerprinting: identify AI/ML components, versions, entrypoints, deployment mode, and
    platform exposure path.
 2. Interface Enumeration: enumerate API, dashboard, runtime proxy, artifact, telemetry, streaming,
-   model serving, storage, auth/admin, and management interfaces.
-3. Boundary Modeling: compare expected authentication, authorization, exposure, trust, tenant,
+   model serving, storage, auth/admin, and management interfaces. Record interface inventory fields
+   that support boundary analysis rather than generic endpoint lists.
+3. Runtime Interaction Mapping: map model, plugin/tool, data source, external service, downstream
+   action, identity, policy, and audit paths created by runtime-facing interfaces.
+4. Boundary Modeling: compare expected authentication, authorization, exposure, trust, tenant,
    workspace, namespace, object, runtime, artifact, and management boundaries with observed
-   deployment and route behavior.
-4. Candidate Vulnerability Generation: convert boundary mismatches into concrete candidate
+   deployment and route behavior. Build runtime interaction and boundary-mismatch tables when the
+   evidence supports them.
+5. Candidate Vulnerability Generation: convert boundary mismatches into concrete candidate
    vulnerabilities with severity, score, confidence, evidence, impact, false-positive conditions,
    and remediation guidance.
-5. Manual Verification Planning: turn candidates into a concrete non-destructive manual verification
+6. Manual Verification Planning: turn candidates into a concrete non-destructive manual verification
    plan when the user asks for verification or a full pipeline.
-6. Safe Validation Guidance: provide safe validation guidance and explicit unsafe-test boundaries.
+7. Safe Validation Guidance: provide safe validation guidance and explicit unsafe-test boundaries.
    Do not default to PoC exploitation or destructive validation.
 
 ## Agent Work Mode
@@ -69,6 +90,7 @@ Primary pipeline:
 ```text
 component-fingerprint
   -> interface-enumerator
+  -> runtime-interaction-mapper
   -> boundary-analyzer
   -> candidate-vulnerability-generator
   -> manual-verification-planner
@@ -102,6 +124,7 @@ Recommended roles:
 | --- | --- |
 | component-fingerprint | Identify AI/ML components such as MLflow, Ray, Triton, Jupyter, Kubeflow, Prometheus/DCGM, MinIO, object stores, notebook proxies, model-serving services, and deployment entrypoints. |
 | interface-enumerator | Enumerate API, dashboard, runtime, artifact, telemetry, management, model-serving, storage, streaming, and auth/admin interfaces. |
+| runtime-interaction-mapper | Map model, plugin/tool, data source, external service, downstream action, identity, policy, tenant/workspace binding, and audit paths created by runtime-facing interfaces. |
 | boundary-analyzer | Compare platform boundaries and component boundaries; identify authentication, authorization, exposure, tenant, workspace, namespace, object, and trust mismatches. |
 | artifact-registry | Inspect model, checkpoint, dataset, prompt, artifact URI, object-store, local-path, bucket, and registry boundary behavior. |
 | runtime-management | Inspect job submit/cancel/logs, kernels, notebooks, terminals, model load/unload, runtime proxy, and execution-control interfaces. |
@@ -134,7 +157,9 @@ Optional raw artifacts:
 
 ```text
 {report_dir}/phase1-discovery/raw/interface-enumeration-table.yaml
+{report_dir}/phase1-discovery/raw/runtime-interaction-graph-table.yaml
 {report_dir}/phase1-discovery/raw/boundary-model-table.yaml
+{report_dir}/phase1-discovery/raw/boundary-mismatch-table.yaml
 {report_dir}/phase1-discovery/raw/candidate-vulnerabilities.yaml
 ```
 

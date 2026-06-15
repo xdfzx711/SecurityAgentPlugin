@@ -150,11 +150,40 @@ interfaces:
     route_or_api: <route>
     protocol: <REST | gRPC | WebSocket | SSE | HTTP | S3 | unknown>
     operation: <read | search | submit | cancel | delete | load | unload | logs | metrics | proxy | unknown>
+    operation_semantics: <read-only | sensitive-read | state-changing | management-plane | runtime-control | artifact-control | telemetry | model-serving | storage | unknown>
     state_changing: <true | false | unknown>
     sensitive_output:
       - <data type>
+    authn_observed: <gateway | oidc | token | basic-auth | none | unknown>
+    authz_scope_observed: <user | workspace | project | namespace | tenant | object | admin | service-account | absent | unknown>
     expected_boundary: <expected auth/authz/exposure/trust boundary>
     observed_exposure: <observed behavior>
+    dangerous_operations:
+      - <submit | execute | delete | restart | load | unload | mutate | upload | none | unknown>
+    safe_probe_available: <GET | HEAD | OPTIONS | config-review | source-review | none>
+    evidence:
+      - <evidence>
+
+runtime_interaction_graph:
+  - interaction_id: RUNTIME-AIML-001
+    entry_interface_id: IFACE-AIML-001
+    entry_component: <component>
+    caller_identity: <end-user | tenant-user | service-account | notebook-user | anonymous | unknown>
+    runtime_identity: <pod service account | platform service | component user | root/container user | unknown>
+    models:
+      - <model, endpoint, repository, or unknown>
+    plugins_or_tools:
+      - <plugin, tool, function call, connector, or none>
+    data_sources:
+      - <object store | database | vector DB | mounted volume | external API | none | unknown>
+    external_services:
+      - <OpenAI-compatible endpoint | vendor API | webhook | storage backend | none | unknown>
+    downstream_actions:
+      - <read | write | execute | call external API | load model | retrieve artifact | emit telemetry | unknown>
+    policy_enforcement_point: <gateway | backend middleware | runtime policy | service mesh | network policy | none | unknown>
+    tenant_or_workspace_binding: <explicit | inferred | service-identity-only | absent | unknown>
+    audit_visibility: <request | tool call | model load | artifact read | downstream API | none | unknown>
+    boundary_question: <what authority does the entry interface give the caller after runtime expansion?>
     evidence:
       - <evidence>
 
@@ -168,12 +197,48 @@ boundary_models:
     evidence:
       - <evidence>
 
+boundary_mismatches:
+  - mismatch_id: MISMATCH-AIML-001
+    interface_id: IFACE-AIML-001
+    interaction_id: RUNTIME-AIML-001 | null
+    component_original_assumption: <trusted internal network | admin-only | localhost | owner-session | single-tenant | signed artifact | unknown>
+    platform_integration_assumption: <gateway-authenticated | tenant-facing | shared namespace | service-account-mediated | public | unknown>
+    expected_boundary:
+      authentication: <required | optional | absent | unknown>
+      authorization: <user | workspace | namespace | object | admin | absent | unknown>
+      exposure: <internal-only | tenant-facing | public | admin-only | unknown>
+      trust: <trusted-internal | untrusted-external | mixed | unknown>
+      runtime_scope: <owner-session | workspace | namespace | cluster | unknown>
+      artifact_scope: <workspace | project | tenant | bucket | local-path | unknown>
+      telemetry_scope: <tenant-filtered | namespace-filtered | cluster-wide | unknown>
+    observed_boundary:
+      authentication: <evidence-backed observation>
+      authorization: <evidence-backed observation>
+      exposure: <evidence-backed observation>
+      trust: <evidence-backed observation>
+      runtime_scope: <evidence-backed observation>
+      artifact_scope: <evidence-backed observation>
+      telemetry_scope: <evidence-backed observation>
+    mismatch_type: <exposure expansion | auth coverage gap | object authz gap | identity propagation mismatch | runtime capability expansion | artifact trust drift | telemetry oversharing | management-plane reachability | route-method-protocol gap | external connector trust gap | update lifecycle drift>
+    candidate_rule_ids:
+      - <RULE-AIML-*>
+    evidence:
+      - <evidence>
+    evidence_gaps:
+      - <gap>
+    false_positive_conditions:
+      - <condition>
+
 candidate_vulnerabilities:
   - vulnerability_id: CAND-AIML-001
     title: <title>
     taxonomy: <A1-A8 | proposed category>
     component: <component>
     interface_id: IFACE-AIML-001
+    mismatch_ids:
+      - MISMATCH-AIML-001
+    candidate_rule_ids:
+      - RULE-AIML-*
     boundary_violated: <boundary>
     vulnerability_class: <class>
     cwe:

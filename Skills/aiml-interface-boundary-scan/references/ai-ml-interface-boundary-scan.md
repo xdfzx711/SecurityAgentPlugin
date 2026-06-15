@@ -38,9 +38,144 @@ Run these modules in order:
 ```text
 Component Fingerprinter
   -> Interface Enumerator
+  -> Runtime Interaction Mapper
   -> Boundary Analyzer
   -> Candidate Vulnerability Generator
   -> Manual Verification Preview
+```
+
+## Interface Map Handoff From Step 1
+
+If the user has already run an interface-map phase, load its three files before starting Phase 1
+boundary scanning:
+
+```text
+{report_dir}/phase1-interface-map/{component_slug}_interface_map.md
+{report_dir}/phase1-interface-map/external_protection_dependency_map.md
+{report_dir}/phase1-interface-map/tenant_exposure_decision_map.md
+```
+
+Use these files as authoritative starting evidence for:
+
+- Interface inventory rows.
+- Component default protection assumptions.
+- Interfaces that depend on external platform protection.
+- Interfaces that should not be directly exposed to ordinary tenants.
+- Dangerous operations that must not be called during validation.
+
+The boundary scan should add analysis on top of the map: expected boundary, observed boundary,
+boundary mismatch, candidate vulnerability, evidence gaps, and safe verification plan. Do not
+rewrite the interface map unless the source evidence contradicts it or the user asks to refresh it.
+
+## Structured Analysis Tables
+
+During Phase 1, keep the analysis centered on three reusable tables. These tables are working
+artifacts that help convert whitepaper-style guidance about runtime security, model security,
+MLSecOps, secure deployment, GPU AI infrastructure, and AI security posture into concrete interface
+boundary evidence.
+
+Do not prioritize broad AI asset governance or component-source approval fields unless the user asks
+for governance coverage. Focus on the integrated platform interface behavior.
+
+### 1. Interface Inventory Table
+
+Use this table to enumerate every API, dashboard, runtime, artifact, telemetry, model-serving,
+storage, streaming, auth/admin, and management interface.
+
+Required fields:
+
+```yaml
+interface_id: IFACE-AIML-001
+component: <MLflow | Ray | Jupyter | Triton | Prometheus/DCGM | MinIO | Open WebUI | other>
+interface_family: <API | Dashboard | Runtime Proxy | Artifact | Telemetry | Management | Model Serving | Storage | Streaming | Auth/Admin>
+endpoint_or_route: <route, API name, bucket path, metric endpoint, proxy route, or service>
+protocol: <HTTP | REST | gRPC | WebSocket | SSE | S3 | TCP | unknown>
+methods_or_operations:
+  - <GET | POST | submit | cancel | load | unload | logs | metrics | proxy | read | write | unknown>
+operation_semantics: <read-only | sensitive-read | state-changing | management-plane | runtime-control | artifact-control | telemetry | model-serving | storage | unknown>
+state_changing: <true | false | unknown>
+sensitive_output:
+  - <model names | prompts | logs | tokens | job metadata | GPU metrics | artifact paths | none | unknown>
+observed_exposure: <public | tenant-facing | cluster-internal | admin-only | localhost | unknown>
+authn_observed: <gateway | oidc | token | basic-auth | none | unknown>
+authz_scope_observed: <user | workspace | project | namespace | tenant | object | admin | service-account | absent | unknown>
+discovery_source:
+  - <source file, OpenAPI, frontend route, Kubernetes Service, Ingress, Helm value, safe HTTP behavior>
+dangerous_operations:
+  - <submit | execute | delete | restart | load | unload | mutate | upload | none | unknown>
+safe_probe_available: <GET | HEAD | OPTIONS | config-review | source-review | none>
+```
+
+### 2. Runtime Interaction Graph Table
+
+Use this table when an AI/ML component combines models, tools, plugins, data sources, external model
+backends, runtime channels, or downstream APIs. The goal is to identify whether a platform entrypoint
+turns into a broader runtime capability than the caller should receive.
+
+Required fields:
+
+```yaml
+interaction_id: RUNTIME-AIML-001
+entry_interface_id: IFACE-AIML-001
+entry_component: <component>
+caller_identity: <end-user | tenant-user | service-account | notebook-user | anonymous | unknown>
+runtime_identity: <pod service account | platform service | component user | root/container user | unknown>
+models:
+  - <model, model endpoint, model repository, or unknown>
+plugins_or_tools:
+  - <plugin, tool, function call, connector, or none>
+data_sources:
+  - <object store | database | vector DB | mounted volume | external API | none | unknown>
+external_services:
+  - <OpenAI-compatible endpoint | vendor API | webhook | storage backend | none | unknown>
+downstream_actions:
+  - <read | write | execute | call external API | load model | retrieve artifact | emit telemetry | unknown>
+policy_enforcement_point: <gateway | backend middleware | runtime policy | service mesh | network policy | none | unknown>
+tenant_or_workspace_binding: <explicit | inferred | service-identity-only | absent | unknown>
+audit_visibility: <request | tool call | model load | artifact read | downstream API | none | unknown>
+boundary_question: <what authority does the entry interface give the caller after runtime expansion?>
+evidence:
+  - <file, config, route, deployment evidence, docs, safe behavior>
+```
+
+### 3. Boundary Mismatch Table
+
+Use this table to bridge evidence into candidate vulnerabilities. Every candidate should point back
+to one or more boundary mismatch rows.
+
+Required fields:
+
+```yaml
+mismatch_id: MISMATCH-AIML-001
+interface_id: IFACE-AIML-001
+interaction_id: RUNTIME-AIML-001 | null
+component_original_assumption: <trusted internal network | admin-only | localhost | owner-session | single-tenant | signed artifact | unknown>
+platform_integration_assumption: <gateway-authenticated | tenant-facing | shared namespace | service-account-mediated | public | unknown>
+expected_boundary:
+  authentication: <required | optional | absent | unknown>
+  authorization: <user | workspace | namespace | object | admin | absent | unknown>
+  exposure: <internal-only | tenant-facing | public | admin-only | unknown>
+  trust: <trusted-internal | untrusted-external | mixed | unknown>
+  runtime_scope: <owner-session | workspace | namespace | cluster | unknown>
+  artifact_scope: <workspace | project | tenant | bucket | local-path | unknown>
+  telemetry_scope: <tenant-filtered | namespace-filtered | cluster-wide | unknown>
+observed_boundary:
+  authentication: <evidence-backed observation>
+  authorization: <evidence-backed observation>
+  exposure: <evidence-backed observation>
+  trust: <evidence-backed observation>
+  runtime_scope: <evidence-backed observation>
+  artifact_scope: <evidence-backed observation>
+  telemetry_scope: <evidence-backed observation>
+mismatch_type: <exposure expansion | auth coverage gap | object authz gap | identity propagation mismatch | runtime capability expansion | artifact trust drift | telemetry oversharing | management-plane reachability | route-method-protocol gap | external connector trust gap | update lifecycle drift>
+candidate_rule_ids:
+  - <RULE-AIML-*>
+evidence:
+  - <file, route, config, policy, HTTP behavior, schema, docs>
+evidence_gaps:
+  - <what must be confirmed manually>
+false_positive_conditions:
+  - <what would disprove or downgrade the mismatch>
 ```
 
 ## Agent Work Mode And Roles
@@ -52,6 +187,7 @@ Primary dependency chain:
 ```text
 component-fingerprint
   -> interface-enumerator
+  -> runtime-interaction-mapper
   -> boundary-analyzer
   -> candidate-vulnerability-generator
   -> manual-verification-planner
@@ -80,6 +216,7 @@ boundary mismatch.
 | --- | --- |
 | component-fingerprint | Identify AI/ML third-party components, versions, images, packages, services, ports, routes, UI assets, and deployment entrypoints. Detect MLflow, Ray, Jupyter, Dask, Open WebUI, Kubeflow, Triton, Prometheus/DCGM, MinIO/S3, notebook proxies, runtime proxies, model-serving services, artifact stores, and external model connectors. |
 | interface-enumerator | Build the interface inventory from the component list. Record route, method, protocol, interface type, operation semantics, state-changing behavior, sensitive output, discovery source, observed exposure, and preliminary auth observation. |
+| runtime-interaction-mapper | Build runtime interaction graph rows for interfaces that connect models, tools/plugins, data sources, external services, downstream APIs, runtime channels, model-serving backends, or telemetry emitters. Record caller identity, runtime identity, policy point, tenant/workspace binding, audit visibility, and runtime expansion boundary questions. |
 | artifact-registry | Inspect models, checkpoints, datasets, prompts, artifact URIs, object-store paths, local paths, file URIs, buckets, registry metadata, and storage roots. Look for workspace, project, tenant, object, and storage-boundary drift. |
 | runtime-management | Inspect job submit/cancel/logs, notebook kernels, terminals, runtime proxies, Ray Jobs, Jupyter sessions, model load/unload, inference management, and execution-control interfaces. Identify code-execution, workload-control, and runtime-scope risks. |
 | dashboard-proxy | Inspect dashboard routes, reverse proxies, path rewrites, host/path controllability, WebSocket/SSE upgrades, backend direct access, route stack differences, and proxy authentication consistency. |
@@ -161,7 +298,7 @@ Output:
 Language:
 Chinese by default unless the user requests otherwise.
 
-Run these four modules in order:
+Run these five modules in order:
 
 1. Component Fingerprinter
    - Identify AI/ML components, versions, entrypoints, deployment mode, and platform exposure path.
@@ -173,20 +310,33 @@ Run these four modules in order:
    - Enumerate exposed API, Dashboard, Runtime Proxy, Artifact/Registry, Telemetry, Streaming,
      Auth/Admin, Model Serving, Storage, and Management interfaces.
    - For each interface record route, method/protocol, operation semantics, state-changing behavior,
-     sensitive output, observed exposure, auth observation, and discovery source.
+     sensitive output, observed exposure, auth observation, authorization scope, dangerous operations,
+     safe probe availability, and discovery source.
    - Prefer source review, OpenAPI, frontend route extraction, deployment config, ingress/gateway
      policy, HEAD, OPTIONS, and safe GET.
    - Do not call submit, cancel, delete, restart, shutdown, load, unload, execute, mutate, upload, or
      registry-changing endpoints.
 
-3. Boundary Analyzer
+3. Runtime Interaction Mapper
+   - Build a runtime interaction graph for interfaces that connect models, plugins, tools, data
+     sources, external services, downstream APIs, runtime channels, or model-serving backends.
+   - For each interaction record caller identity, runtime identity, models, tools/plugins, data
+     sources, external services, downstream actions, policy enforcement point, tenant/workspace
+     binding, audit visibility, and the boundary question.
+   - Treat model APIs, plugin managers, inference servers, notebook/runtime proxies, external
+     connectors, object stores, and telemetry emitters as possible interaction expansion points.
+
+4. Boundary Analyzer
    - For each interface compare expected boundary vs observed boundary.
    - Evaluate authentication, authorization, exposure, trust, runtime scope, artifact scope,
      management control, telemetry scope, storage boundary, and external connector trust.
    - Identify whether the component assumes trusted-internal use while the platform exposes it to
      users, tenants, public routes, notebooks, gateways, proxies, or external backends.
+   - Populate the boundary mismatch table with component original assumption, platform integration
+     assumption, expected boundary, observed boundary, mismatch type, candidate rule IDs, evidence,
+     evidence gaps, and false-positive conditions.
 
-4. Candidate Vulnerability Generator
+5. Candidate Vulnerability Generator
    - Convert boundary mismatches into concrete candidate vulnerabilities.
    - Do not output only abstract patterns. Every candidate must name the affected component,
      interface, taxonomy risk category, boundary mismatch, vulnerability class, evidence, impact,
@@ -194,6 +344,8 @@ Run these four modules in order:
      guidance.
    - Use `aiml-risk-taxonomy.md` to assign A1-A8 when a candidate fits. If a candidate does not fit,
      propose a new risk category in the report appendix instead of forcing it into the closest class.
+   - Use the candidate generation rules in this reference as detection bases. Do not add broad
+     unregistered-component governance findings unless the user explicitly asks for governance.
    - Use status values:
      candidate_requires_manual_validation, confirmed_by_non_destructive_probe, needs_more_evidence,
      or not_a_vulnerability_contextual.
@@ -290,6 +442,7 @@ High-value component signals:
 ### Module 2: Interface Enumerator
 
 Enumerate exposed interfaces and label protocol, operation semantics, and preliminary boundary.
+Populate the Interface Inventory Table for each interface instead of producing only a free-form list.
 
 Interface types:
 
@@ -314,7 +467,29 @@ Do not trigger destructive or workload-changing operations during discovery. Ide
 DELETE, shutdown, submit, cancel, restart, terminate, model-load, model-unload, registry mutation, or
 arbitrary-code paths.
 
-### Module 3: Boundary Analyzer
+### Module 3: Runtime Interaction Mapper
+
+Build the Runtime Interaction Graph Table for interfaces that expand from a simple request into model
+access, plugin/tool invocation, artifact retrieval, storage access, external API calls, telemetry, or
+runtime control.
+
+Interaction dimensions:
+
+- Caller identity vs runtime identity: Does the runtime execute as the user, platform service,
+  component service account, namespace identity, or unknown identity?
+- Model path: Which model, model endpoint, repository, model server, or model load path is reached?
+- Tool and plugin path: Can the interaction call plugins, function tools, external connectors, or
+  downstream APIs?
+- Data path: Which object stores, mounted volumes, databases, vector stores, or external services are
+  reachable?
+- Policy point: Is enforcement at the gateway, backend, runtime policy layer, service mesh, network
+  policy, or absent?
+- Tenant/workspace binding: Is the runtime explicitly tied to the caller's user, workspace, project,
+  namespace, object, or session?
+- Audit visibility: Can the platform reconstruct model loads, artifact reads, tool calls, external
+  API calls, and runtime control actions?
+
+### Module 4: Boundary Analyzer
 
 For each interface, compare expected boundary against observed behavior and deployment context.
 
@@ -337,7 +512,11 @@ Boundary dimensions:
 - External Connector: Are OpenAI-compatible endpoints, tools, function calls, and SSE events treated
   as untrusted data?
 
-### Module 4: Candidate Vulnerability Generator
+Also populate the Boundary Mismatch Table. The analyzer should explicitly identify the component's
+original security assumption and the platform integration assumption before assigning a mismatch
+type.
+
+### Module 5: Candidate Vulnerability Generator
 
 Convert boundary mismatches into concrete candidate vulnerabilities. Final output must describe
 specific possible vulnerabilities, not only abstract mismatch categories.
@@ -431,6 +610,37 @@ Also consider:
 - Route-method policy gap.
 - External tool execution trust gap.
 - Version-specific security assumption drift.
+
+## Candidate Generation Rules
+
+Use these rules to convert Interface Inventory, Runtime Interaction Graph, and Boundary Mismatch
+rows into candidate vulnerabilities. These rules are detection bases, not report titles. A candidate
+must still include concrete component, interface, evidence, confidence, false-positive conditions,
+and safe validation guidance.
+
+Do not generate a generic "unregistered AI/ML component exposure" candidate from governance or
+approval status alone. If an untracked component also exposes a concrete unsafe interface, report the
+specific boundary mismatch instead.
+
+| Rule ID | Trigger | Candidate Direction | Typical Taxonomy |
+| --- | --- | --- | --- |
+| RULE-AIML-RUNTIME-COMPOSITE-POLICY | `Runtime Interaction Graph` shows models plus plugins/tools/data sources/external services, but `policy_enforcement_point` is `none`, gateway-only, or unknown for downstream actions. | AI runtime composite call chain lacks fine-grained policy control. | A3, A7, proposed external-tool category |
+| RULE-AIML-ARTIFACT-UNVERIFIED-LOAD | `artifact_scope` or `load_path` reaches production runtime, but checksum, signature, scan, provenance, or promotion gate evidence is absent. | Unverified model or artifact can enter runtime or model-serving path. | A4 |
+| RULE-AIML-THIRD-PARTY-MODEL-PROMOTION | External model, model hub, shared registry, or user-controlled artifact can be promoted or loaded by non-admin or unclear authority. | Third-party model promotion bypasses platform deployment boundary. | A4, A7 |
+| RULE-AIML-DASHBOARD-API-EXPOSURE-EXPANSION | `component_original_assumption` is localhost, trusted-internal, admin-only, or single-user, while `observed_exposure` is tenant-facing, cluster-wide, public, or proxy-reachable. | Component dashboard/API exposure is expanded by platform integration. | A2, A6 |
+| RULE-AIML-CROSS-TENANT-AUTHZ-GAP | Gateway authenticates a caller, but backend API, artifact, telemetry, runtime, or storage access lacks user/workspace/namespace/object authorization. | Front-door authentication and backend object authorization are inconsistent. | A1, A4, A5, A7 |
+| RULE-AIML-IDENTITY-PROPAGATION-MISMATCH | Requests cross a gateway/proxy/service account boundary and backend sees service identity, caller-controlled headers, or no trusted user context. | Platform identity propagation conflicts with component authorization assumptions. | A7 |
+| RULE-AIML-GPU-K8S-MGMT-PLANE-REACHABILITY | GPU operator, device plugin, scheduler, driver, Run:ai, namespace admin, or cluster management interface is reachable from tenant workloads or ordinary user routes. | GPU/Kubernetes infrastructure management plane is reachable across tenant boundary. | A1, A6, A7 |
+| RULE-AIML-TELEMETRY-CROSS-BOUNDARY | Metrics, logs, traces, GPU metrics, scheduler data, model names, job labels, prompts, artifact paths, or request metadata are exposed without tenant/namespace filtering. | AI/ML telemetry leaks cross-tenant or platform operational data. | A5 |
+| RULE-AIML-INFERENCE-DATA-HANDLING-OPAQUE | Inference input/output, prompt, response, cache, log, trace, or external data handling is unclear and includes sensitive data or external services. | Inference data flows create undeclared exposure through logs, cache, or external services. | A5, proposed inference data-plane category |
+| RULE-AIML-RUNTIME-TOOL-OVERPRIVILEGE | Runtime tools, plugins, downstream APIs, notebook contexts, or service accounts can perform write/admin/sensitive reads beyond caller authority. | Runtime tool capability grants over-broad platform authority. | A3, A7 |
+| RULE-AIML-LIFECYCLE-UPDATE-DRIFT | Third-party AI/ML component, model server, operator, plugin, or runtime has unknown patch SLA, deprecated version, uncontrolled auto-update, rollback gap, or production branch drift. | Third-party component lifecycle drift creates platform supply-chain exposure. | A6, proposed lifecycle category |
+| RULE-AIML-AUDIT-PROVENANCE-GAP | Model, dataset, prompt, artifact, runtime action, tool call, external API call, or management action lacks audit log, provenance, or integrity evidence. | Model/runtime/data flow cannot be traced or tamper-detected after platform integration. | A4, A5, A7 |
+| RULE-AIML-INTERNAL-PATH-BYPASS | Gateway/Ingress protects the facade, but internal artifact/runtime/management/telemetry services remain reachable from cluster tenants, notebooks, jobs, or sibling services. | Entry authentication does not cover internal service paths. | A1, A2, A5, A6, A8 |
+
+When multiple rules match the same interface, merge them into one candidate if they describe the
+same exploitable boundary failure. Keep them separate when they cross different access paths,
+interfaces, or trust boundaries.
 
 ## Scoring
 
