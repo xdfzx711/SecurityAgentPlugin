@@ -1,0 +1,33 @@
+{
+  "owner": "JR-Agent-Skills",
+  "slug": "aiml-component-interface-map",
+  "displayName": "AI/ML Component Interface Map",
+  "description": "Build a source-backed standalone interface baseline for third-party AI/ML components, including completeness, planes, security contracts, and network or non-network surfaces.",
+  "version": "2.0.0",
+  "tags": [
+    "security",
+    "ai-ml",
+    "mlops",
+    "component-baseline",
+    "interface-enumeration",
+    "completeness-gate",
+    "non-network-interface"
+  ],
+  "license": "MIT",
+  "latest": {
+    "version": "2.0.0",
+    "publishedAt": 1784822400000
+  },
+  "history": [
+    {
+      "version": "2.0.0",
+      "publishedAt": 1784822400000,
+      "notes": "Separate standalone component mapping from platform integration analysis and add the completeness gate and normative baseline schema"
+    },
+    {
+      "version": "1.0.0",
+      "publishedAt": 1781193600000,
+      "notes": "Initial release as aiml-interface-map"
+    }
+  ]
+}

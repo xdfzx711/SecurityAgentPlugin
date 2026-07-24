@@ -4,9 +4,9 @@ Use this taxonomy for AI/ML third-party components integrated into GPU compute p
 platform interface-layer risk categories for candidate generation, scoring, verification planning,
 and report terminology.
 
-This is a seed taxonomy, not an exhaustive list. Agents must identify new AI/ML platform
-interface-boundary risk categories when evidence supports a concrete boundary mismatch that does not
-fit A1-A8.
+This is a seed taxonomy. For the current integration pipeline, classify candidates only as A1-A8.
+When evidence does not fit, record an unmatched research pattern without creating a new candidate
+category; taxonomy evolution is a separate maintenance decision.
 
 ## A1. Management API Boundary Bypass
 
@@ -18,6 +18,7 @@ Affected interfaces:
 - Job control APIs.
 - Model load/unload and repository management APIs.
 - Cluster, session, runtime, worker, scheduler, or service management APIs.
+- Workflow CRDs, controllers, admission webhooks, and service-account-mediated control operations.
 
 Common signals:
 
@@ -197,6 +198,7 @@ Affected interfaces:
 - Kubernetes Service, Ingress, Gateway, NodePort, LoadBalancer, port-forward, and service mesh routes.
 - Helm values, Docker Compose, environment variables, default credentials, and auth flags.
 - Dashboards, metrics endpoints, object stores, and model-serving control planes.
+- CRDs, controllers, admission webhooks, mounted filesystems, databases, and artifact repositories.
 
 Common signals:
 
@@ -233,6 +235,7 @@ Affected interfaces:
 - Gateway-authenticated APIs.
 - Backend service APIs that rely on headers, service accounts, or frontend checks.
 - Storage, runtime, telemetry, dashboard, model-serving, and artifact APIs.
+- Kubernetes controllers and workflows that collapse user identity into a shared ServiceAccount.
 
 Common signals:
 
@@ -269,6 +272,7 @@ Affected interfaces:
 - REST, gRPC, WebSocket, SSE, OpenAPI, dashboard backend, and static route stacks.
 - GET, POST, DELETE, PATCH, OPTIONS, WebSocket upgrade, and streaming methods.
 - Versioned or newly introduced component APIs.
+- CRD versions/subresources, admission operations, controller watches, and translated protocols.
 
 Common signals:
 
@@ -313,12 +317,13 @@ material in the target:
 - Path Normalization Boundary Mismatch: gateway, proxy, frontend, and backend normalize encoded,
   duplicated, stripped, or rewritten paths differently.
 
-## Adding New Risk Categories
+## Unmatched Research Patterns
 
-When a candidate does not fit A1-A8, add a proposed category in the report appendix:
+When an observed pattern does not fit A1-A8, do not create a candidate category during the scan.
+Record it separately for later taxonomy maintenance:
 
 ```yaml
-risk_id: AX
+pattern_id: UNMATCHED-AIML-001
 name: <short name>
 definition: <boundary mismatch definition>
 affected_interfaces:
@@ -333,10 +338,9 @@ false_positive_conditions:
   - <condition that would disprove or downgrade the risk>
 ```
 
-Rules for new categories:
+Rules:
 
 - Anchor the category in an interface-boundary mismatch, not a generic vulnerability class.
 - Cite concrete evidence that does not fit A1-A8 cleanly.
-- Keep the category reusable across components or deployments.
-- Do not create a new category for a one-off implementation bug unless it reveals a broader platform
-  interface-boundary pattern.
+- Keep the pattern reusable across components or deployments.
+- Keep it out of `candidate_vulnerabilities` until the taxonomy is deliberately revised.

@@ -2,19 +2,33 @@
   "owner": "JR-Agent-Skills",
   "slug": "aiml-interface-boundary-scan",
   "displayName": "AI/ML Interface Boundary Scan",
-  "description": "Scan AI/ML third-party components after GPU compute platform integration, focusing on platform interface-layer risks, exposed interfaces, trust-boundary mismatches, and candidate vulnerability reporting.",
-  "version": "1.0.0",
-  "tags": ["security", "ai-ml", "mlops", "gpu-platform", "interface-enumeration", "boundary-analysis", "platform-security", "component-integration", "manual-verification"],
+  "description": "Resolve platform bindings to a component interface baseline, map reachability and identity/policy paths, analyze integration-induced security deltas, and triage candidates.",
+  "version": "2.0.0",
+  "tags": [
+    "security",
+    "ai-ml",
+    "mlops",
+    "interface-binding",
+    "reachability",
+    "identity-policy",
+    "integration-delta",
+    "cve-triage"
+  ],
   "license": "MIT",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1741046400000
+    "version": "2.0.0",
+    "publishedAt": 1784822400000
   },
   "history": [
     {
+      "version": "2.0.0",
+      "publishedAt": 1784822400000,
+      "notes": "Consume Stage A baselines and separate platform binding, reachability, identity/policy, integration delta, verification, and CVE triage"
+    },
+    {
       "version": "1.0.0",
       "publishedAt": 1741046400000,
-      "notes": "Initial release for AI/ML platform interface-boundary scanning and non-destructive manual verification planning"
+      "notes": "Initial interface-boundary scanning release"
     }
   ]
 }
