@@ -33,7 +33,8 @@ registration_source:
 ```
 
 For non-network roots, use a meaningful protocol and locator: `Kubernetes`, `filesystem`, `S3`,
-`SQL`, or `library`, with port set to `not_applicable`.
+`SQL`, `library`, `Unix`, `ioctl`, `CUDA`, `NVML`, `ROCm`, `IPC`, `CDI`, `OCI`, `RDMA`, or `NCCL`,
+with port set to `not_applicable`.
 
 ## 3. Walk top-down
 
@@ -60,6 +61,8 @@ roots. Use the relevant framework adapters. Include:
 - plugin hooks and dynamic route registries;
 - webhooks, CRDs, reconcilers, watches, and service-account-mediated actions;
 - filesystem, object-store, database, and library contracts;
+- device-node access, Unix sockets, shared-memory/IPC roots, accelerator library/driver calls,
+  CDI/OCI/runtime hooks, and RDMA/collective-fabric entrypoints;
 - feature flags and alternate server stacks.
 
 Classify each result as reachable from a root, configuration-gated, generated/client-only,
@@ -74,6 +77,8 @@ Cross-check:
 - protobuf services against server registration;
 - frontend calls against backend routes;
 - configuration keys against gated interfaces;
+- component-authored manifests/runtime hooks against device, socket, host, driver, IPC, and fabric
+  operations;
 - top-down operations against reverse-search results.
 
 Deduplicate aliases without losing protocol variants. REST and gRPC operations with equivalent
@@ -84,12 +89,15 @@ semantics remain separate interface records when policy can cover them different
 Use one primary family:
 
 `API`, `Dashboard`, `Runtime`, `Model Serving`, `Artifact`, `Storage`, `Telemetry`, `Streaming`,
-`Management`, `Auth/Admin`, `Proxy`, or `Orchestration / Kubernetes Control`.
+`Management`, `Auth/Admin`, `Proxy`, `Orchestration / Kubernetes Control`, `Accelerator / Device`,
+`Node Runtime`, `IPC / Shared Memory`, `Fabric / Collective`, `Driver / Kernel`, or
+`Privileged Agent`.
 
 Use one `surface_kind`:
 
 `network`, `kubernetes_resource`, `filesystem`, `object_store`, `webhook`, `controller`, `database`,
-or `library_api`.
+`library_api`, `device`, `unix_socket`, `shared_memory`, `runtime_hook`, `kernel_interface`, or
+`fabric`.
 
 Use one `plane`:
 
@@ -101,7 +109,33 @@ Use one `plane`:
 
 Do not use `mixed` merely because classification is uncertain.
 
-## 7. Derive the security contract
+## 7. Derive runtime privilege contracts
+
+Create one `CPRIV-*` profile per workload role and meaningful component deployment/feature profile.
+Inspect component-owned Helm charts, manifests, operators, entrypoint scripts, documentation,
+runtime hooks, RBAC, and source checks for:
+
+- privileged mode, privilege escalation, root/non-root execution, and Linux capabilities;
+- host PID/IPC/network namespaces;
+- hostPath paths, container paths, access mode, and mount propagation;
+- device paths/resources, permissions, assigned/all/control-device scope;
+- ServiceAccount token automount, API groups, resources, verbs, resourceNames, nonResourceURLs, and
+  namespace/cluster scope;
+- seccomp, AppArmor, SELinux, and read-only-root-filesystem assumptions.
+
+Record two distinct privilege sets:
+
+- `minimum_required`: only privileges whose necessity is supported by source, specification,
+  official documentation, or a clearly labeled inference;
+- `component_default_requested`: the effective request in the component's own default manifests or
+  generated configuration.
+
+Do not copy a default request into `minimum_required`. Absence of a privilege in one manifest is not
+proof that it is unnecessary in another supported profile. Scope every profile to its workload role,
+enabled features, and affected listeners/interfaces. Normalize RBAC rules rather than recording only
+Role/ClusterRole names.
+
+## 8. Derive the security contract
 
 Derive only component-native facts:
 
@@ -111,11 +145,16 @@ Derive only component-native facts:
 - expected network or resource scope;
 - default protection assumption.
 
+For accelerator surfaces, derive only component-native assumptions such as assigned-device scope,
+expected memory/IPC domain, runtime/device-policy enforcement, trusted-node requirements, fabric
+membership, or required driver privilege. Do not infer the integrating platform's actual mounts,
+sharing mode, tenant layout, or node policy in Stage A.
+
 Evidence priority is source/default configuration, normative specification, official documentation,
 then inference. For an inference, label `evidence_type: inference` and state the reasoning. Absence
 of auth middleware is evidence for `absent` only after all registration stacks were checked.
 
-## 8. Run the completeness gate
+## 9. Run the completeness gate
 
 Populate the coverage object from the schema. Set:
 
@@ -135,12 +174,33 @@ The coverage report and YAML `discovery_checks` records must include:
 | Dynamic registration | pass/fail/n-a | evidence | exact gap |
 | Proto services | pass/fail/n-a | evidence | exact gap |
 | Feature/config flags | pass/fail/n-a | evidence | exact gap |
+| Accelerator surfaces | pass/fail/n-a | devices/sockets/hooks/driver/fabric roots | exact gap |
+| Runtime privilege profiles | pass/fail | workload/securityContext/RBAC/device evidence | exact gap |
 | Reverse search | pass/fail | patterns and roots | exact gap |
 | Cross-check | pass/fail | reconciliation counts | exact gap |
 
-Include counts for discovered listeners, route stacks, interfaces, unmatched top-down results,
-unmatched bottom-up results, and exclusions. Give every gap a stable `CGAP-*` ID and affected
+Include counts for discovered listeners, route stacks, interfaces, runtime privilege profiles,
+unmatched top-down results, unmatched bottom-up results, and exclusions. Give every gap a stable
+`CGAP-*` ID and affected
 listener, interface, protocol, surface, profile, or source-root scope so Stage B can propagate it.
+
+## Accelerator-aware component acceptance profile
+
+When the component ships or invokes accelerator operators, device plugins, runtime hooks, MPS/IPC,
+driver management, telemetry agents, RDMA/collective transports, or privileged node workloads,
+explicitly reconcile:
+
+- device/resource allocation entrypoints and device/control-node operations;
+- Unix sockets, MPS/control paths, shared-memory and IPC contracts;
+- CDI/OCI/runtime hook registration and component-authored runtime configuration;
+- driver/library/kernel interface calls and required privilege assumptions;
+- RDMA, NCCL, GPUDirect, rendezvous, and fabric membership operations;
+- DaemonSet, CRD/webhook, hostPath, host-namespace, capability, and RBAC declarations shipped by the
+  component.
+
+If an applicable class is unexamined, set `accelerator_surfaces_checked: false` and
+`coverage_status: incomplete`. Inventorying these surfaces does not assert that a platform exposes
+them or that they are vulnerable.
 
 ## TensorFlow Serving acceptance profile
 

@@ -2,8 +2,8 @@
   "owner": "JR-Agent-Skills",
   "slug": "aiml-component-interface-map",
   "displayName": "AI/ML Component Interface Map",
-  "description": "Build a source-backed standalone interface baseline for third-party AI/ML components, including completeness, planes, security contracts, and network or non-network surfaces.",
-  "version": "2.0.0",
+  "description": "Build a source-backed standalone interface and workload privilege baseline, separating minimum-required from component-default privileges across network, device, runtime, driver, IPC, fabric, RBAC, and host surfaces.",
+  "version": "4.0.0",
   "tags": [
     "security",
     "ai-ml",
@@ -11,14 +11,27 @@
     "component-baseline",
     "interface-enumeration",
     "completeness-gate",
-    "non-network-interface"
+    "non-network-interface",
+    "accelerator-interface",
+    "device-runtime-driver",
+    "runtime-privilege-contract"
   ],
   "license": "MIT",
   "latest": {
-    "version": "2.0.0",
-    "publishedAt": 1784822400000
+    "version": "4.0.0",
+    "publishedAt": 1787270400000
   },
   "history": [
+    {
+      "version": "4.0.0",
+      "publishedAt": 1787270400000,
+      "notes": "Add workload/profile-scoped runtime privilege contracts that distinguish evidence-backed minimum requirements from component-default requests"
+    },
+    {
+      "version": "3.0.0",
+      "publishedAt": 1787270400000,
+      "notes": "Add accelerator device, Unix socket, shared-memory/IPC, runtime-hook, driver/kernel, fabric, and privileged-agent interface discovery and schema support"
+    },
     {
       "version": "2.0.0",
       "publishedAt": 1784822400000,

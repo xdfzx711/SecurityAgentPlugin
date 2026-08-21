@@ -57,6 +57,33 @@ frontend-to-backend API calls.
 Enumerate each plugin's dynamically registered routes. A scan of ordinary decorators alone is
 incomplete when the plugin registry was not expanded.
 
+## Accelerator, runtime, driver, IPC, and fabric
+
+For accelerator-aware components, search component source, shipped manifests, entrypoint scripts,
+and default configuration for:
+
+| Surface | Search seeds |
+| --- | --- |
+| Device allocation | `nvidia.com/gpu`, MIG resource names, device-plugin APIs, `Allocate`, preferred allocation, CDI device specs, `/dev/nvidia`, `/dev/dri` |
+| Runtime hooks | `RuntimeClass`, `nvidia-container-runtime`, OCI hooks, CDI generation, containerd/CRI-O config templates, runtime installers |
+| CUDA/driver | CUDA Driver API, NVML, ROCm/HIP, device open/ioctl wrappers, kernel-module management, driver containers |
+| MPS and IPC | MPS control daemon, pipe/socket directories, CUDA IPC handles, `hostIPC`, IPC modes, `/dev/shm`, shared-memory APIs |
+| Fabric | RDMA, `/dev/infiniband`, InfiniBand, RoCE, SR-IOV, NCCL bootstrap/rendezvous, GPUDirect, NetworkAttachmentDefinition |
+| Privileged agents | `DaemonSet`, `privileged`, hostPID/IPC/network, hostPath, capabilities, node selectors/tolerations, ClusterRole, admission webhook |
+
+These are discovery seeds, not evidence that a platform exposes the surface or that the surface is
+vulnerable. Trace each component-owned root to a concrete operation and record its standalone
+security/protection assumption.
+
+## Runtime privilege contracts
+
+For every component workload role, search component-owned Helm/manifests/operators and source for
+`securityContext`, `privileged`, `allowPrivilegeEscalation`, `runAsUser`, capabilities, hostPID,
+hostIPC, hostNetwork, hostPath, mount propagation, device mounts/resources, RuntimeClass, seccomp,
+AppArmor, SELinux, ServiceAccount, Role/ClusterRole, wildcard verbs/resources, `bind`, `escalate`,
+and `impersonate`. Trace operator-generated workloads and feature/profile branches. Record default
+requests separately from evidence-backed minimum requirements.
+
 ## Specs and cross-language registration
 
 Always search OpenAPI/Swagger documents, protobufs, GraphQL schemas/resolvers, WebSocket upgrades,

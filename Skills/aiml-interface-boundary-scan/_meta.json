@@ -2,8 +2,8 @@
   "owner": "JR-Agent-Skills",
   "slug": "aiml-interface-boundary-scan",
   "displayName": "AI/ML Interface Boundary Scan",
-  "description": "Resolve platform bindings to a component interface baseline, map reachability and identity/policy paths, analyze integration-induced security deltas, and triage candidates.",
-  "version": "2.0.0",
+  "description": "Resolve component/GPU assets and workload privilege contracts, compare caller authority separately from component-effective host/device/RBAC privileges, analyze integration deltas, and triage A1-A9 candidates.",
+  "version": "5.0.0",
   "tags": [
     "security",
     "ai-ml",
@@ -12,14 +12,32 @@
     "reachability",
     "identity-policy",
     "integration-delta",
-    "cve-triage"
+    "cve-triage",
+    "gpu-security",
+    "device-node-isolation",
+    "runtime-overprivilege"
   ],
   "license": "MIT",
   "latest": {
-    "version": "2.0.0",
-    "publishedAt": 1784822400000
+    "version": "5.0.0",
+    "publishedAt": 1787270400000
   },
   "history": [
+    {
+      "version": "5.0.0",
+      "publishedAt": 1787270400000,
+      "notes": "Add Stage B effective runtime privilege bindings and Stage C caller/runtime privilege deltas with semantic host/device/RBAC comparison and ownership rules"
+    },
+    {
+      "version": "4.0.0",
+      "publishedAt": 1787270400000,
+      "notes": "Add A9 accelerator device/node isolation, GPU assets, mandatory device/memory/partition/IPC/fabric/agent/driver coverage, and GPU-aware Stage B-D contracts"
+    },
+    {
+      "version": "3.0.0",
+      "publishedAt": 1787270400000,
+      "notes": "Make tenant GPU workload execution a default attacker origin and require cross-tenant, node-local, direct-cluster, control-plane, and non-network path coverage"
+    },
     {
       "version": "2.0.0",
       "publishedAt": 1784822400000,

@@ -1,6 +1,6 @@
 ---
 name: aiml-component-interface-map
-description: "Build a substantially complete, source-backed interface baseline for a standalone third-party AI/ML component. Use for AI/ML, MLOps, notebook, model-serving, telemetry, storage, workflow/controller, dashboard, runtime, and management components when Codex must enumerate network and non-network interfaces, listeners, registration paths, security contracts, and data/control/management/telemetry planes without analyzing any platform integration or producing vulnerability findings."
+description: "Build a substantially complete, source-backed interface and runtime-privilege baseline for a standalone third-party AI/ML component. Use when Codex must enumerate network/non-network interfaces, device/runtime/driver/IPC/fabric surfaces, workload-specific minimum-required versus default-requested privileges, listeners, security contracts, and operation planes without analyzing platform integration or producing vulnerability findings."
 ---
 
 # AI/ML Component Interface Map
@@ -38,13 +38,15 @@ Component Fingerprint
 
 Treat a listener as any externally consumable registration root, including HTTP/gRPC/TCP servers,
 WebSocket/SSE endpoints, Unix sockets, webhooks, Kubernetes CRDs/controllers, filesystem/object-store
-contracts, database endpoints, and library APIs.
+contracts, database endpoints, library APIs, device nodes, shared-memory/IPC roots, OCI/CDI/runtime
+hooks, driver/kernel interfaces, and RDMA/collective-fabric entrypoints exposed by the component.
 
 Assign stable IDs:
 
 ```text
 CLISTENER-{COMPONENT}-{NNN}
 CIFACE-{COMPONENT}-{NNN}
+CPRIV-{COMPONENT}-{NNN}
 ```
 
 Preserve IDs across reruns when the same registration and operation still exist.
@@ -63,6 +65,10 @@ ordinary_tenant_decision:
 Record `unknown` with an evidence gap instead of filling missing component facts with platform
 behavior.
 
+Keep `minimum_required` distinct from `component_default_requested`. A shipped Helm chart or
+manifest proves what the component requests by default, not what it minimally requires. Record
+minimum necessity only from evidence and use `unknown` when it cannot be established.
+
 ## Outputs
 
 Write:
@@ -74,7 +80,7 @@ Write:
 ```
 
 The Markdown map summarizes the component fingerprint, listeners, interface families, planes,
-dangerous operations, security contracts, and evidence. The YAML file follows the normative schema.
+dangerous operations, workload privilege profiles, security contracts, and evidence. The YAML file follows the normative schema.
 The coverage report records every completeness check, unmatched top-down/bottom-up result, excluded
 surface, and remaining gap.
 
@@ -93,6 +99,10 @@ Do not label the baseline `substantially_complete` unless:
 - excluded generated, test, deprecated, or client-only interfaces are listed with evidence;
 - each interface has a listener/registration root, source evidence, plane, surface kind, security
   contract, and safe-probe decision.
+- for accelerator-aware components, device/runtime/driver/IPC/fabric surfaces have been checked or
+  explicitly marked not applicable.
+- every component-defined default workload role and materially different supported profile has a
+  `CPRIV-*` that distinguishes evidence-backed minimum requirements from component-default requests.
 
 Otherwise set `coverage_status: incomplete` and state exactly what is missing. Completeness means
 the method was exhausted with documented residual gaps; it never means mathematical proof.
