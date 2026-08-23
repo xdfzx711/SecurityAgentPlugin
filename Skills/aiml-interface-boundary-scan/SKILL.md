@@ -33,9 +33,12 @@ Always read:
 - [references/integration-topology-and-delegation.md](references/integration-topology-and-delegation.md);
 - [references/integration-delta.md](references/integration-delta.md);
 - [references/runtime-privilege-delta.md](references/runtime-privilege-delta.md);
-- [references/aiml-risk-taxonomy.md](references/aiml-risk-taxonomy.md).
+- [references/aiml-risk-taxonomy.md](references/aiml-risk-taxonomy.md);
+- [references/chinese-report-format.md](references/chinese-report-format.md).
 
 `integration-topology-and-delegation.md` is normative for v6 indirect/delegated integrations and overrides any older assumption that a resolved integration must contain a direct source dependency, listener, proxy, or direct platform-to-component call.
+
+`chinese-report-format.md` is normative for all human-readable Markdown reports. The Markdown output must use Chinese prose and the fixed candidate template defined there. Stable IDs, enum values, API/resource names, CWE/CVSS, source symbols, and necessary product names remain in their original form.
 
 Read `cve-triage.md` for Stage D/ownership/disclosure decisions and `gpu-device-node-boundary.md` for accelerator-aware deployments.
 
@@ -92,7 +95,55 @@ Write the existing Stage B–D artifacts plus, when applicable:
 {report_dir}/stage-b-platform-integration/resource-ownership-map.md
 ```
 
-The normative Stage B YAML must include v6 topology/bridge/PSOP/parameter/identity/resource records defined in `integration-topology-and-delegation.md`. Default to Chinese prose and English identifiers/enums.
+The normative Stage B YAML must include v6 topology/bridge/PSOP/parameter/identity/resource records defined in `integration-topology-and-delegation.md`.
+
+### Human-readable report language
+
+All human-readable Markdown reports under Stage A–D default to Chinese. YAML handoff schemas continue to use the existing English field names, IDs, and enum values so downstream automation remains stable.
+
+The primary Stage C candidate report:
+
+```text
+{report_dir}/stage-c-security-delta/candidate-vulnerabilities.md
+```
+
+must follow `references/chinese-report-format.md` exactly. Every retained candidate uses a stable heading such as:
+
+```markdown
+### CAND-AIML-001: <中文候选漏洞标题>
+```
+
+and must contain, in order:
+
+```text
+组件
+组件版本
+Taxonomy
+接口
+协议/方法
+漏洞类型
+CWE
+影响边界
+严重性
+评分
+置信度
+状态
+验证优先级
+
+预期边界
+观察边界
+当前证据
+证据缺口
+可能影响
+误报条件
+安全验证建议
+禁止自动执行的危险步骤
+修复建议
+```
+
+Do not omit empty sections. State `暂无已确认内容`, `待人工验证`, or another explicit unknown/gap marker instead of leaving sections blank.
+
+Sort candidates by validation priority (`P0` -> `P1` -> `P2` -> `P3`), then by severity and confidence. Keep rejected/low-quality research leads separate from the main high-priority candidate list.
 
 ## Candidate gate
 
