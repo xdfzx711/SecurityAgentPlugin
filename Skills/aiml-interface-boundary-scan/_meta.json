@@ -2,15 +2,20 @@
   "owner": "JR-Agent-Skills",
   "slug": "aiml-interface-boundary-scan",
   "displayName": "AI/ML Interface Boundary Scan",
-  "description": "Resolve component/GPU assets and workload privilege contracts, compare caller authority separately from component-effective host/device/RBAC privileges, analyze integration deltas, and triage A1-A9 candidates.",
-  "version": "5.0.0",
+  "description": "Resolve direct and indirect integration topology, component/GPU/platform-operation targets, delegated identity and parameter/resource ownership chains, runtime privileges, integration deltas, and A1-A9 candidates.",
+  "version": "6.0.0",
   "tags": [
     "security",
     "ai-ml",
     "mlops",
     "interface-binding",
+    "integration-topology",
+    "delegation",
+    "managed-service",
     "reachability",
     "identity-policy",
+    "parameter-flow",
+    "resource-ownership",
     "integration-delta",
     "cve-triage",
     "gpu-security",
@@ -19,10 +24,15 @@
   ],
   "license": "MIT",
   "latest": {
-    "version": "5.0.0",
-    "publishedAt": 1787270400000
+    "version": "6.0.0",
+    "publishedAt": 1787450400000
   },
   "history": [
+    {
+      "version": "6.0.0",
+      "publishedAt": 1787450400000,
+      "notes": "Add evidence-backed integration topology for indirect workflow/controller/SDK/managed-service integrations, PSOP platform operation targets, integration bridges, identity chains, parameter propagation, and resource ownership bindings"
+    },
     {
       "version": "5.0.0",
       "publishedAt": 1787270400000,
