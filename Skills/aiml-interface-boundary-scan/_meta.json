@@ -2,8 +2,8 @@
   "owner": "JR-Agent-Skills",
   "slug": "aiml-interface-boundary-scan",
   "displayName": "AI/ML Interface Boundary Scan",
-  "description": "Resolve direct and indirect integration topology, component/GPU/platform-operation targets, delegated identity and parameter/resource ownership chains, runtime privileges, integration deltas, and A1-A9 candidates with standardized Chinese security reports.",
-  "version": "6.1.0",
+  "description": "Resolve direct and indirect integration topology, component/GPU/platform-operation targets, delegated identity and parameter/resource ownership chains, runtime privileges, integration deltas, and A1-A9 candidates with concise Chinese security reports.",
+  "version": "6.2.0",
   "tags": [
     "security",
     "ai-ml",
@@ -24,10 +24,15 @@
   ],
   "license": "MIT",
   "latest": {
-    "version": "6.1.0",
-    "publishedAt": 1787464800000
+    "version": "6.2.0",
+    "publishedAt": 1787629200000
   },
   "history": [
+    {
+      "version": "6.2.0",
+      "publishedAt": 1787629200000,
+      "notes": "Reduce final output to two Chinese Markdown reports: a concise component boundary scan and a candidate vulnerability report containing description, attacker capability, root cause, reproduction environment, reproduction steps, and possible impact"
+    },
     {
       "version": "6.1.0",
       "publishedAt": 1787464800000,

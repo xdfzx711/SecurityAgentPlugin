@@ -36,11 +36,11 @@ Always read:
 - [references/aiml-risk-taxonomy.md](references/aiml-risk-taxonomy.md);
 - [references/chinese-report-format.md](references/chinese-report-format.md).
 
-`integration-topology-and-delegation.md` is normative for v6 indirect/delegated integrations and overrides any older assumption that a resolved integration must contain a direct source dependency, listener, proxy, or direct platform-to-component call.
+`integration-topology-and-delegation.md` is normative for v6 indirect/delegated integrations and overrides older assumptions that a resolved integration must contain a direct source dependency, listener, proxy, or direct platform-to-component call.
 
-`chinese-report-format.md` is normative for all human-readable Markdown reports. The Markdown output must use Chinese prose and the fixed candidate template defined there. Stable IDs, enum values, API/resource names, CWE/CVSS, source symbols, and necessary product names remain in their original form.
+`chinese-report-format.md` is normative for final output formatting.
 
-Read `cve-triage.md` for Stage D/ownership/disclosure decisions and `gpu-device-node-boundary.md` for accelerator-aware deployments.
+Read `cve-triage.md` for Stage D/ownership/disclosure decisions and `gpu-device-node-boundary.md` for accelerator-aware deployments when applicable.
 
 ## Workflow
 
@@ -82,84 +82,84 @@ and:
 user/tenant identity -> service account/workload identity -> controller identity -> cloud/service identity -> execution/resource identity
 ```
 
-The absence of `kubeflow`, `sagemaker`, or another endpoint-specific keyword in one repository is not evidence that no integration exists when an adapter/controller/contract chain resolves the integration.
+The absence of endpoint-specific keywords in one repository is not evidence that no integration exists when an adapter/controller/contract chain resolves the integration.
 
 Treat arbitrary code inside an authorized tenant GPU workload as a baseline platform capability. Evaluate north-south, east-west, node-local, Kubernetes-control, non-network, controller-mediated, SDK-mediated, storage, and managed-service paths independently.
 
-## Stage outputs
+## Final outputs
 
-Write the existing Stage B–D artifacts plus, when applicable:
-
-```text
-{report_dir}/stage-b-platform-integration/parameter-propagation-map.md
-{report_dir}/stage-b-platform-integration/resource-ownership-map.md
-```
-
-The normative Stage B YAML must include v6 topology/bridge/PSOP/parameter/identity/resource records defined in `integration-topology-and-delegation.md`.
-
-### Human-readable report language
-
-All human-readable Markdown reports under Stage A–D default to Chinese. YAML handoff schemas continue to use the existing English field names, IDs, and enum values so downstream automation remains stable.
-
-The primary Stage C candidate report:
+Final delivery must contain exactly two human-readable Chinese Markdown reports:
 
 ```text
-{report_dir}/stage-c-security-delta/candidate-vulnerabilities.md
+{report_dir}/component-boundary-scan.md
+{report_dir}/candidate-vulnerabilities.md
 ```
 
-must follow `references/chinese-report-format.md` exactly. Every retained candidate uses a stable heading such as:
+Do not emit separate human-readable Stage B/C/D reports such as interface-binding-map, reachability-map, identity-policy-map, runtime-privilege-map, gpu-device-node-boundary-map, parameter-propagation-map, resource-ownership-map, integration-delta, verification-plan, or cve-triage.
+
+The analysis may still use the corresponding concepts and internal structured notes. When machine-readable handoff data is required by an orchestrator, preserve the existing English schema/IDs/enums internally, but do not treat those artifacts as user-facing final reports unless explicitly requested.
+
+### Report 1: component boundary scan
+
+`component-boundary-scan.md` must summarize only the security-relevant boundary information needed to understand the integration:
+
+1. 扫描对象；
+2. 组件接口与能力边界；
+3. 集成调用链；
+4. 身份与权限边界；
+5. 参数与资源边界；
+6. 边界扫描结论。
+
+Keep this report concise. Do not enumerate ordinary interfaces that have no security relevance.
+
+### Report 2: candidate vulnerabilities
+
+`candidate-vulnerabilities.md` contains only retained vulnerability candidates worth manual reproduction. Every candidate uses a stable heading:
 
 ```markdown
 ### CAND-AIML-001: <中文候选漏洞标题>
 ```
 
-and must contain, in order:
+Keep metadata minimal:
 
 ```text
 组件
-组件版本
 Taxonomy
-接口
-协议/方法
-漏洞类型
-CWE
-影响边界
 严重性
-评分
 置信度
 状态
 验证优先级
-
-预期边界
-观察边界
-当前证据
-证据缺口
-可能影响
-误报条件
-安全验证建议
-禁止自动执行的危险步骤
-修复建议
 ```
 
-Do not omit empty sections. State `暂无已确认内容`, `待人工验证`, or another explicit unknown/gap marker instead of leaving sections blank.
+Then include exactly these six substantive sections:
 
-Sort candidates by validation priority (`P0` -> `P1` -> `P2` -> `P3`), then by severity and confidence. Keep rejected/low-quality research leads separate from the main high-priority candidate list.
+```text
+候选漏洞描述
+攻击者能力
+Root Cause
+复现环境
+复现步骤
+可能影响
+```
+
+Do not add separate sections for evidence gaps, false-positive conditions, remediation, expected boundary, observed boundary, or prohibited automated actions. Fold only the essential evidence and boundary difference into `候选漏洞描述` and `Root Cause`.
+
+Sort candidates by `P0 -> P1 -> P2 -> P3`, then by severity and confidence. Keep rejected and low-quality research leads out of the final candidate report.
 
 ## Candidate gate
 
-Do not retain a candidate merely because an interface, platform operation, GPU asset, shared identity, or sensitive parameter exists. Require an evidence-backed integration delta and answer the existing gate plus:
+Do not retain a candidate merely because an interface, platform operation, GPU asset, shared identity, or sensitive parameter exists. Require an evidence-backed integration delta and answer:
 
-```yaml
-integration_topology_resolved:
-integration_bridge_resolved:
-identity_chain_evaluated:
-parameter_flow_evaluated:
-resource_ownership_binding_evaluated:
+```text
+1. 哪个低权限主体可以触发？
+2. 经过哪条真实集成链？
+3. 哪个安全边界发生了变化或丢失？
+4. 最终到达哪个具体 CIFACE-* / GASSET-* / PSOP-* 或资源？
+5. 为什么不是组件独立部署时同样存在的问题？
+6. 为什么不是用户显式不安全配置导致？
 ```
 
-At least one concrete target must exist: `CIFACE-*`, `GASSET-*`, or `PSOP-*`.
-
-For indirect/delegated integrations, the relevant bridge, identity, parameter, and ownership chains must be resolved enough to state a concrete boundary and impact. Retain unresolved but plausible cases as `research_only`/`needs_evidence` rather than forcing them into candidate vulnerabilities.
+For indirect/delegated integrations, resolve topology, bridge, identity, parameter, and ownership chains enough to state a concrete source -> sink boundary and impact. Plausible but unresolved ideas remain internal research leads.
 
 ## Taxonomy discipline
 
@@ -175,9 +175,9 @@ Use A1–A9 unchanged. Do not create A10 merely for cloud/controller/SDK integra
 ## Safety and claims
 
 - Prefer static source/configuration/contracts and non-destructive metadata.
-- Do not submit workflows, mutate CRDs/resources, create cloud resources, invoke state-changing service operations, read real tenant artifacts, execute payloads, or bypass live authorization.
-- Every reachability/invocation edge, bridge hop, identity transformation, parameter flow, ownership binding, policy point, and delta must cite evidence; otherwise mark it unresolved.
-- Do not mark Stage B complete for an indirect integration until topology, critical bridges, applicable identity chains, security-sensitive parameter flows, and ownership bindings are evaluated or evidence-backed `not_applicable`.
+- Do not submit workflows, mutate CRDs/resources, create cloud resources, invoke state-changing service operations, read real tenant artifacts, execute payloads, or bypass live authorization automatically.
+- Reproduction steps may describe state-changing or cross-tenant checks only as manual actions for an authorized isolated test environment using synthetic resources.
+- Every candidate must cite enough source/configuration/contract evidence in `候选漏洞描述` or `Root Cause` to support the integration chain and boundary claim.
 - Do not treat shared ServiceAccounts, IAM `PassRole`, privileged workloads, assigned GPU access, or dangerous operations alone as proof of a vulnerability.
 - Call outputs candidates until authorized manual verification confirms the claim.
 - Distinguish component behavior, adapter/controller behavior, platform/service root cause, deployment/policy misconfiguration, and shared ownership.
