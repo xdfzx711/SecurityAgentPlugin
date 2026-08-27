@@ -1,0 +1,176 @@
+{
+  "schema_version": "1.0",
+  "scan_id": "SSCAN-DEMO-001",
+  "scan_mode": "source_discovery",
+  "inputs": {
+    "platform": {
+      "name": "Demo GPU Platform",
+      "revision": "platform-commit",
+      "source_roots": ["platform/"]
+    },
+    "component": {
+      "name": "Demo Component",
+      "revision": "component-commit",
+      "source_roots": ["component/"]
+    },
+    "stage_a_baseline": "stage-a-component-baseline/interface-map.yaml",
+    "stage_a_interface_ids": ["CIFACE-DEMO-001"],
+    "integration_sources": [
+      {
+        "source_id": "ISRC-DEMO-001",
+        "role": "platform",
+        "artifact": "demo/platform",
+        "revision": "platform-commit",
+        "scope": "platform/",
+        "configuration_provenance": "source_default"
+      },
+      {
+        "source_id": "ISRC-DEMO-002",
+        "role": "component",
+        "artifact": "demo/component",
+        "revision": "component-commit",
+        "scope": "component/",
+        "configuration_provenance": "source_default"
+      }
+    ]
+  },
+  "threat_model": [
+    {
+      "actor_id": "ACTOR-DEMO-001",
+      "actor_class": "workload_process",
+      "origin": "tenant_workload",
+      "tenant_relation": "another_tenant",
+      "initial_capabilities": ["arbitrary_code_in_assigned_gpu_workload", "cluster_network_access"],
+      "effective_credentials": ["workload_service_account"],
+      "excluded_privileges": ["cluster_admin", "node_root"]
+    }
+  ],
+  "source_coverage": [
+    {"role": "platform", "applicable": true, "status": "evaluated", "evidence_ids": ["EVID-DEMO-001"], "gap_ids": []},
+    {"role": "component", "applicable": true, "status": "evaluated", "evidence_ids": ["EVID-DEMO-002"], "gap_ids": []},
+    {"role": "integration_adapter", "applicable": false, "status": "not_applicable", "evidence_ids": ["EVID-DEMO-001"], "gap_ids": []},
+    {"role": "controller", "applicable": false, "status": "not_applicable", "evidence_ids": ["EVID-DEMO-001"], "gap_ids": []},
+    {"role": "operator", "applicable": false, "status": "not_applicable", "evidence_ids": ["EVID-DEMO-001"], "gap_ids": []},
+    {"role": "sdk", "applicable": false, "status": "not_applicable", "evidence_ids": ["EVID-DEMO-001"], "gap_ids": []},
+    {"role": "deployment", "applicable": true, "status": "evaluated", "evidence_ids": ["EVID-DEMO-001"], "gap_ids": []},
+    {"role": "service_contract", "applicable": false, "status": "not_applicable", "evidence_ids": ["EVID-DEMO-001"], "gap_ids": []},
+    {"role": "policy_contract", "applicable": true, "status": "evaluated", "evidence_ids": ["EVID-DEMO-001"], "gap_ids": []},
+    {"role": "storage_contract", "applicable": false, "status": "not_applicable", "evidence_ids": ["EVID-DEMO-001"], "gap_ids": []},
+    {"role": "generated_artifact", "applicable": false, "status": "not_applicable", "evidence_ids": ["EVID-DEMO-001"], "gap_ids": []}
+  ],
+  "path_coverage": [
+    {"path_class": "north_south", "applicable": false, "status": "not_applicable", "chain_ids": [], "evidence_ids": ["EVID-DEMO-001"], "gap_ids": []},
+    {"path_class": "workload_east_west", "applicable": true, "status": "evaluated", "chain_ids": ["CHAIN-DEMO-001"], "evidence_ids": ["EVID-DEMO-001", "EVID-DEMO-002"], "gap_ids": []},
+    {"path_class": "node_local", "applicable": false, "status": "not_applicable", "chain_ids": [], "evidence_ids": ["EVID-DEMO-001"], "gap_ids": []},
+    {"path_class": "kubernetes_control", "applicable": false, "status": "not_applicable", "chain_ids": [], "evidence_ids": ["EVID-DEMO-001"], "gap_ids": []},
+    {"path_class": "non_network", "applicable": false, "status": "not_applicable", "chain_ids": [], "evidence_ids": ["EVID-DEMO-001"], "gap_ids": []},
+    {"path_class": "storage", "applicable": false, "status": "not_applicable", "chain_ids": [], "evidence_ids": ["EVID-DEMO-001"], "gap_ids": []},
+    {"path_class": "controller_or_sdk", "applicable": false, "status": "not_applicable", "chain_ids": [], "evidence_ids": ["EVID-DEMO-001"], "gap_ids": []},
+    {"path_class": "managed_service", "applicable": false, "status": "not_applicable", "chain_ids": [], "evidence_ids": ["EVID-DEMO-001"], "gap_ids": []}
+  ],
+  "targets": [],
+  "evidence": [
+    {
+      "evidence_id": "EVID-DEMO-001",
+      "evidence_type": "source",
+      "source_id": "ISRC-DEMO-001",
+      "revision": "platform-commit",
+      "locator": "platform/deploy/service.yaml",
+      "selector": "spec.ports[0]",
+      "assertion": "The component service is reachable from tenant workload namespaces.",
+      "confidence": "high"
+    },
+    {
+      "evidence_id": "EVID-DEMO-002",
+      "evidence_type": "source",
+      "source_id": "ISRC-DEMO-002",
+      "revision": "component-commit",
+      "locator": "component/server/routes.py",
+      "selector": "register_admin_routes",
+      "assertion": "The management operation is registered without component-native authorization.",
+      "confidence": "high"
+    }
+  ],
+  "chains": [
+    {
+      "chain_id": "CHAIN-DEMO-001",
+      "chain_type": "invocation",
+      "actor_id": "ACTOR-DEMO-001",
+      "source": "tenant workload cluster-network request",
+      "target": {"kind": "component_interface", "target_id": "CIFACE-DEMO-001"},
+      "hops": [
+        {"order": 1, "participant": "tenant workload", "operation": "connect to ClusterIP", "transformation": "direct service path", "evidence_ids": ["EVID-DEMO-001"]},
+        {"order": 2, "participant": "component server", "operation": "invoke management route", "transformation": "route dispatch", "evidence_ids": ["EVID-DEMO-002"]}
+      ],
+      "guard_ids": ["GUARD-DEMO-001"],
+      "evidence_ids": ["EVID-DEMO-001", "EVID-DEMO-002"],
+      "status": "resolved",
+      "reachability": "statically_proven"
+    }
+  ],
+  "guards": [
+    {
+      "guard_id": "GUARD-DEMO-001",
+      "kind": "authorization",
+      "location": "component management route",
+      "subject": "tenant workload identity",
+      "resource": "component global management state",
+      "decision_scope": "global",
+      "result": "missing",
+      "evidence_ids": ["EVID-DEMO-002"],
+      "gap_ids": []
+    }
+  ],
+  "deltas": [
+    {
+      "delta_id": "DELTA-DEMO-001",
+      "chain_ids": ["CHAIN-DEMO-001"],
+      "target": {"kind": "component_interface", "target_id": "CIFACE-DEMO-001"},
+      "primary_dimension": "authorization",
+      "expected_boundary": "operator-only management operation",
+      "static_integration_state": "tenant workloads can reach the operation without object or role authorization",
+      "changed": true,
+      "comparison_basis": "Stage A operator-only contract compared with the platform direct-service path",
+      "integration_relevance": "The platform service creates tenant-workload reachability absent from the standalone trusted-network contract.",
+      "evidence_ids": ["EVID-DEMO-001", "EVID-DEMO-002"],
+      "gap_ids": []
+    }
+  ],
+  "candidates": [
+    {
+      "candidate_id": "CAND-DEMO-001",
+      "title": "租户工作负载可能绕过平台入口访问组件管理接口",
+      "status": "source_supported_candidate",
+      "preliminary_severity": "High",
+      "source_confidence": "High",
+      "verification_priority": "P1",
+      "actor_id": "ACTOR-DEMO-001",
+      "controlled_source": "cluster-network request from an ordinary tenant GPU workload",
+      "target": {"kind": "component_interface", "target_id": "CIFACE-DEMO-001"},
+      "chain_ids": ["CHAIN-DEMO-001"],
+      "guard_ids": ["GUARD-DEMO-001"],
+      "delta_ids": ["DELTA-DEMO-001"],
+      "boundary_crossed": "tenant data-plane workload to component management plane",
+      "root_cause": "The integration exposes the backend service directly while authorization exists only at the platform facade.",
+      "root_cause_owner": "platform",
+      "integration_relevance": "Standalone deployment assumes a trusted operator network; the platform introduces tenant-workload reachability.",
+      "possible_impact": ["unauthorized component management"],
+      "evidence_ids": ["EVID-DEMO-001", "EVID-DEMO-002"],
+      "deployment_conditions": [],
+      "manual_verification": {
+        "environment": "Isolated test cluster with two synthetic tenants and the scanned revisions.",
+        "steps": [
+          {"order": 1, "action": "Render and inspect the effective Service and network policies."},
+          {"order": 2, "action": "From a synthetic tenant workload, perform an authorized read-only reachability check to the management route."}
+        ],
+        "positive_signals": ["The tenant workload reaches a management response without role or object authorization."],
+        "negative_signals": ["A backend, mesh, or network control blocks the direct path for the tenant workload."],
+        "evidence_to_collect": ["Rendered Service and policy objects", "Synthetic request and response metadata"],
+        "prohibited_actions": ["Do not invoke state-changing management operations.", "Do not use real tenant resources."]
+      }
+    }
+  ],
+  "research_leads": [],
+  "gaps": [],
+  "scan_coverage": "complete"
+}

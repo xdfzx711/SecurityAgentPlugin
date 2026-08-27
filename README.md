@@ -1,6 +1,6 @@
 # SecurityAgentPlugin
 
-A collection of skills for evidence-backed security analysis, with a structured AI/ML component integration pipeline.
+面向 GPU 平台第三方 AI/ML 组件集成的源码安全边界扫描 Skill 集合。
 
 ## Project Structure
 
@@ -9,71 +9,64 @@ SecurityAgentPlugin/
   Skills/
     aiml-component-interface-map/
     aiml-interface-boundary-scan/
-    security-scan/
 ```
 
 ## Skills
 
-- **aiml-component-interface-map** - Stage A standalone component discovery. Enumerates network and non-network interfaces, listeners, registration paths, security contracts, planes, dangerous operations, and completeness evidence without analyzing a platform integration.
-- **security-scan** - General multi-agent vulnerability scanning with structured discovery, verification, and validation for codebases.
-- **aiml-interface-boundary-scan** - Stages B–D platform integration analysis. Consumes a Stage A baseline and resolves direct or indirect integration topology, interface/platform-operation bindings, reachability/invocation, identity/policy/delegation, parameter propagation, ownership, runtime/GPU privilege deltas, candidate vulnerabilities, verification plans, and CVE/disclosure priority.
+- **aiml-component-interface-map**：扫描第三方组件源码和默认配置，建立接口、危险能力、运行时权限和安全假设基线。
+- **aiml-interface-boundary-scan**：扫描平台、组件、Adapter、Controller、Operator、SDK、CRD、部署配置和服务契约，发现集成后可能产生的身份、权限、参数、资源、GPU、运行时和节点安全边界变化。
 
-## AI/ML Integration Security Pipeline
+本仓库不提供通用漏洞扫描、自动 PoC、在线攻击验证、CVE 判断或漏洞披露流程。普通代码缺陷只有在真实集成链上造成安全边界变化时，才属于本仓库的扫描范围。
+
+## Source-Scan Pipeline
 
 ```text
-Stage A: Third-party component source
-  -> Component Interface Baseline
+Stage A: Third-party component source and defaults
+  -> Component Interface and Privilege Baseline
 
-Stage B: Baseline + integration evidence
+Stage B: Platform and integration source/configuration/contracts
   -> Integration Topology
-  -> Interface / Platform-Operation Binding
-  -> Reachability / Invocation
-  -> Identity / Policy / Delegation
-  -> Parameter / Resource Ownership Mapping
+  -> Source / Identity / Parameter / Resource / Privilege Chains
 
-Stage C: Component contract vs effective integration state
-  -> Integration Delta + Candidate Vulnerabilities
+Stage C: Component contract vs statically derived integration state
+  -> Source-supported or Deployment-dependent Candidates
+  -> Manual Verification Handoff
 
-Stage D: Authorized manual verification
-  -> Verification Result + CVE/Disclosure Triage
+Out of scope: executing verification or confirming vulnerabilities
 ```
 
-The central separation is:
+核心原则：
 
 ```text
-Know the Component -> Know the Integration -> Find the Security Delta
+Know the Component -> Trace the Integration -> Find the Boundary Delta -> Hand Off for Manual Verification
 ```
 
-Version 6 expands Stage B beyond direct source-level bindings. An integration may be resolved through evidence-backed adapters, CRDs, controllers/operators, SDK calls, managed-service APIs, identities, policies, storage handoffs, or generated resources. The declared platform may be a downstream managed execution backend while the declared component acts as the orchestrator.
+## Outputs
 
-Default report layout:
+默认交付两份中文 Markdown 报告：
 
 ```text
 reports/
-  stage-a-component-baseline/
-    component-interface-map.md
-    interface-map.yaml
-    coverage-report.md
-  stage-b-platform-integration/
-    interface-binding-map.md
-    reachability-map.md
-    identity-policy-map.md
-    runtime-privilege-map.md
-    gpu-device-node-boundary-map.md
-    parameter-propagation-map.md
-    resource-ownership-map.md
-    platform-integration.yaml
-  stage-c-security-delta/
-    integration-delta.md
-    candidate-vulnerabilities.md
-    security-delta.yaml
-  stage-d-verification/
-    verification-plan.md
-    cve-triage.md
-    verification-triage.yaml
+  component-boundary-scan.md
+  candidate-vulnerabilities.md
 ```
 
-`aiml-interface-map` was renamed to `aiml-component-interface-map` in version 2.0. Stage B does not re-enumerate component interfaces; callers pass the Stage A `interface-map.yaml`.
+扫描过程同时生成可校验的内部状态：
+
+```text
+reports/.scan-state/source-scan.json
+```
+
+内部状态用于稳定 ID、证据链、覆盖率和人工验证交接，不代替人类可读报告。
+
+## Candidate Meaning
+
+报告中的问题均为源码阶段候选：
+
+- `source_supported_candidate`：源码和默认/推荐配置已经支持完整问题链，仍需人工确认运行时行为与影响。
+- `deployment_dependent_candidate`：源码支持问题链，但可利用性依赖实际 RBAC、IAM、网络、运行时或 GPU 部署状态。
+
+候选不得在人工验证前标记为已确认漏洞、0-day 或 CVE。
 
 ## Status
 

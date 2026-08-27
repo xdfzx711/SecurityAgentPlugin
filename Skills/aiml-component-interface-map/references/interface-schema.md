@@ -262,7 +262,7 @@ Every `evidence` list in this schema contains objects, not free-form strings:
 
 ```yaml
 - evidence_id: EVID-TFS-001
-  evidence_type: <source | default_config | specification | official_documentation | generated_artifact | read_only_observation | inference>
+  evidence_type: <source | default_config | specification | official_documentation | generated_artifact | inference>
   repository_or_artifact: <repository, image, rendered config, or document>
   revision: <commit, version, image digest, or document version>
   locator: <file/object/URL>

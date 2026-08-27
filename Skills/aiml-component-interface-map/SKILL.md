@@ -1,6 +1,6 @@
 ---
 name: aiml-component-interface-map
-description: "Build a substantially complete, source-backed interface and runtime-privilege baseline for a standalone third-party AI/ML component. Use when Codex must enumerate network/non-network interfaces, device/runtime/driver/IPC/fabric surfaces, workload-specific minimum-required versus default-requested privileges, listeners, security contracts, and operation planes without analyzing platform integration or producing vulnerability findings."
+description: "Statically build a substantially complete, source-backed interface and runtime-privilege baseline for a standalone third-party AI/ML component. Use when Codex must enumerate network/non-network interfaces, device/runtime/driver/IPC/fabric surfaces, workload-specific minimum-required versus default-requested privileges, listeners, security contracts, and operation planes from source and default configuration without probing deployments, analyzing platform integration, or producing vulnerability findings."
 ---
 
 # AI/ML Component Interface Map
@@ -110,8 +110,10 @@ the method was exhausted with documented residual gaps; it never means mathemati
 ## Safety
 
 - Prefer source, specs, default configuration, and documentation.
-- Restrict automated probes to read-only discovery such as GET, HEAD, OPTIONS, reflection, or
-  metadata inspection when explicitly allowed by the schema.
+- Do not send network requests, invoke reflection, inspect a live deployment, or perform metadata
+  probes during this source-scan stage. The `automated_probe` field records whether a later,
+  separately authorized validation workflow could safely probe an operation; it does not authorize
+  this skill to execute the probe.
 - Never submit jobs, execute code, mutate configuration or artifacts, invoke model lifecycle
   operations, or trigger controllers/webhooks with real objects during mapping.
 - Mark dangerous operations `automated_probe: forbidden`; inventorying an operation is not invoking

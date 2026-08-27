@@ -2,8 +2,8 @@
   "owner": "JR-Agent-Skills",
   "slug": "aiml-component-interface-map",
   "displayName": "AI/ML Component Interface Map",
-  "description": "Build a source-backed standalone interface and workload privilege baseline, separating minimum-required from component-default privileges across network, device, runtime, driver, IPC, fabric, RBAC, and host surfaces.",
-  "version": "4.0.0",
+  "description": "Statically build a source-backed standalone interface and workload privilege baseline without probing deployments, separating minimum-required from component-default privileges across network, device, runtime, driver, IPC, fabric, RBAC, and host surfaces.",
+  "version": "5.0.0",
   "tags": [
     "security",
     "ai-ml",
@@ -18,10 +18,15 @@
   ],
   "license": "MIT",
   "latest": {
-    "version": "4.0.0",
-    "publishedAt": 1787270400000
+    "version": "5.0.0",
+    "publishedAt": 1787713952656
   },
   "history": [
+    {
+      "version": "5.0.0",
+      "publishedAt": 1787713952656,
+      "notes": "Restrict Stage A to static source, default configuration, specification, and documentation analysis; retain probe classification only as a later manual-validation hint"
+    },
     {
       "version": "4.0.0",
       "publishedAt": 1787270400000,

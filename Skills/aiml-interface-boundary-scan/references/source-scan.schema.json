@@ -1,0 +1,351 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "source-scan.schema.json",
+  "title": "AI/ML Interface Boundary Source Scan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "scan_id",
+    "scan_mode",
+    "inputs",
+    "threat_model",
+    "source_coverage",
+    "path_coverage",
+    "targets",
+    "evidence",
+    "chains",
+    "guards",
+    "deltas",
+    "candidates",
+    "research_leads",
+    "gaps",
+    "scan_coverage"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "scan_id": { "type": "string", "pattern": "^SSCAN-[A-Z0-9-]+$" },
+    "scan_mode": { "const": "source_discovery" },
+    "inputs": { "$ref": "#/$defs/inputs" },
+    "threat_model": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/threatActor" }
+    },
+    "source_coverage": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/sourceCoverage" }
+    },
+    "path_coverage": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/pathCoverage" }
+    },
+    "targets": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/targetRecord" }
+    },
+    "evidence": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/evidence" }
+    },
+    "chains": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/chain" }
+    },
+    "guards": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/guard" }
+    },
+    "deltas": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/delta" }
+    },
+    "candidates": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/candidate" }
+    },
+    "research_leads": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/researchLead" }
+    },
+    "gaps": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/gap" }
+    },
+    "scan_coverage": {
+      "enum": ["complete", "scoped_incomplete", "incomplete"]
+    }
+  },
+  "$defs": {
+    "nonEmptyString": { "type": "string", "minLength": 1 },
+    "stringArray": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["platform", "component", "stage_a_baseline", "stage_a_interface_ids", "integration_sources"],
+      "properties": {
+        "platform": { "$ref": "#/$defs/fingerprint" },
+        "component": { "$ref": "#/$defs/fingerprint" },
+        "stage_a_baseline": { "$ref": "#/$defs/nonEmptyString" },
+        "stage_a_interface_ids": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^CIFACE-[A-Z0-9-]+$" }
+        },
+        "integration_sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/integrationSource" }
+        }
+      }
+    },
+    "fingerprint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "revision", "source_roots"],
+      "properties": {
+        "name": { "$ref": "#/$defs/nonEmptyString" },
+        "revision": { "$ref": "#/$defs/nonEmptyString" },
+        "source_roots": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "integrationSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_id", "role", "artifact", "revision", "scope", "configuration_provenance"],
+      "properties": {
+        "source_id": { "type": "string", "pattern": "^ISRC-[A-Z0-9-]+$" },
+        "role": {
+          "enum": ["platform", "component", "integration_adapter", "controller", "operator", "sdk", "deployment", "service_contract", "policy_contract", "storage_contract", "generated_artifact"]
+        },
+        "artifact": { "$ref": "#/$defs/nonEmptyString" },
+        "revision": { "$ref": "#/$defs/nonEmptyString" },
+        "scope": { "$ref": "#/$defs/nonEmptyString" },
+        "configuration_provenance": {
+          "enum": ["source_default", "packaging_default", "recommended_example", "generated_default", "test_or_example_only", "user_override", "unknown"]
+        }
+      }
+    },
+    "threatActor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actor_id", "actor_class", "origin", "tenant_relation", "initial_capabilities", "effective_credentials", "excluded_privileges"],
+      "properties": {
+        "actor_id": { "type": "string", "pattern": "^ACTOR-[A-Z0-9-]+$" },
+        "actor_class": { "enum": ["tenant_user", "workload_process", "service_account", "node_process", "platform_admin", "other"] },
+        "origin": { "enum": ["external_network", "tenant_workload", "control_plane_workload", "node_local", "other"] },
+        "tenant_relation": { "enum": ["same_tenant", "another_tenant", "shared_platform", "not_applicable", "unknown"] },
+        "initial_capabilities": { "$ref": "#/$defs/stringArray" },
+        "effective_credentials": { "$ref": "#/$defs/stringArray" },
+        "excluded_privileges": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "sourceCoverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "applicable", "status", "evidence_ids", "gap_ids"],
+      "properties": {
+        "role": {
+          "enum": ["platform", "component", "integration_adapter", "controller", "operator", "sdk", "deployment", "service_contract", "policy_contract", "storage_contract", "generated_artifact"]
+        },
+        "applicable": { "type": "boolean" },
+        "status": { "enum": ["evaluated", "not_applicable", "unresolved"] },
+        "evidence_ids": { "$ref": "#/$defs/stringArray" },
+        "gap_ids": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "pathCoverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path_class", "applicable", "status", "chain_ids", "evidence_ids", "gap_ids"],
+      "properties": {
+        "path_class": {
+          "enum": ["north_south", "workload_east_west", "node_local", "kubernetes_control", "non_network", "storage", "controller_or_sdk", "managed_service"]
+        },
+        "applicable": { "type": "boolean" },
+        "status": { "enum": ["evaluated", "not_applicable", "unresolved"] },
+        "chain_ids": { "$ref": "#/$defs/stringArray" },
+        "evidence_ids": { "$ref": "#/$defs/stringArray" },
+        "gap_ids": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "targetRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "target_id"],
+      "properties": {
+        "kind": { "enum": ["component_interface", "gpu_asset", "platform_service_operation"] },
+        "target_id": { "type": "string", "pattern": "^(CIFACE|GASSET|PSOP)-[A-Z0-9-]+$" }
+      }
+    },
+    "targetRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "target_id", "name", "security_role", "evidence_ids"],
+      "properties": {
+        "kind": { "enum": ["gpu_asset", "platform_service_operation"] },
+        "target_id": { "type": "string", "pattern": "^(GASSET|PSOP)-[A-Z0-9-]+$" },
+        "name": { "$ref": "#/$defs/nonEmptyString" },
+        "security_role": { "$ref": "#/$defs/nonEmptyString" },
+        "evidence_ids": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence_id", "evidence_type", "source_id", "revision", "locator", "selector", "assertion", "confidence"],
+      "properties": {
+        "evidence_id": { "type": "string", "pattern": "^EVID-[A-Z0-9-]+$" },
+        "evidence_type": { "enum": ["source", "default_config", "recommended_config", "generated_artifact", "specification", "service_contract", "policy_contract", "read_only_metadata", "inference"] },
+        "source_id": { "type": "string", "pattern": "^ISRC-[A-Z0-9-]+$" },
+        "revision": { "$ref": "#/$defs/nonEmptyString" },
+        "locator": { "$ref": "#/$defs/nonEmptyString" },
+        "selector": { "$ref": "#/$defs/nonEmptyString" },
+        "assertion": { "$ref": "#/$defs/nonEmptyString" },
+        "confidence": { "enum": ["high", "medium", "low"] }
+      }
+    },
+    "chain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["chain_id", "chain_type", "actor_id", "source", "target", "hops", "guard_ids", "evidence_ids", "status", "reachability"],
+      "properties": {
+        "chain_id": { "type": "string", "pattern": "^CHAIN-[A-Z0-9-]+$" },
+        "chain_type": { "enum": ["invocation", "parameter", "identity", "resource_ownership", "runtime_privilege"] },
+        "actor_id": { "type": "string", "pattern": "^ACTOR-[A-Z0-9-]+$" },
+        "source": { "$ref": "#/$defs/nonEmptyString" },
+        "target": { "$ref": "#/$defs/targetRef" },
+        "hops": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["order", "participant", "operation", "transformation", "evidence_ids"],
+            "properties": {
+              "order": { "type": "integer", "minimum": 1 },
+              "participant": { "$ref": "#/$defs/nonEmptyString" },
+              "operation": { "$ref": "#/$defs/nonEmptyString" },
+              "transformation": { "$ref": "#/$defs/nonEmptyString" },
+              "evidence_ids": { "$ref": "#/$defs/stringArray" }
+            }
+          }
+        },
+        "guard_ids": { "$ref": "#/$defs/stringArray" },
+        "evidence_ids": { "$ref": "#/$defs/stringArray" },
+        "status": { "enum": ["resolved", "partially_resolved", "unresolved"] },
+        "reachability": { "enum": ["statically_proven", "configuration_dependent", "not_reachable", "unresolved"] }
+      }
+    },
+    "guard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["guard_id", "kind", "location", "subject", "resource", "decision_scope", "result", "evidence_ids", "gap_ids"],
+      "properties": {
+        "guard_id": { "type": "string", "pattern": "^GUARD-[A-Z0-9-]+$" },
+        "kind": { "enum": ["authentication", "authorization", "validation", "ownership", "network_policy", "runtime_isolation", "device_policy", "storage_policy", "other"] },
+        "location": { "$ref": "#/$defs/nonEmptyString" },
+        "subject": { "$ref": "#/$defs/nonEmptyString" },
+        "resource": { "$ref": "#/$defs/nonEmptyString" },
+        "decision_scope": { "$ref": "#/$defs/nonEmptyString" },
+        "result": { "enum": ["present_and_bound", "missing", "misbound", "partial", "bypass_path", "deployment_dependent", "unknown"] },
+        "evidence_ids": { "$ref": "#/$defs/stringArray" },
+        "gap_ids": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "delta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["delta_id", "chain_ids", "target", "primary_dimension", "expected_boundary", "static_integration_state", "changed", "comparison_basis", "integration_relevance", "evidence_ids", "gap_ids"],
+      "properties": {
+        "delta_id": { "type": "string", "pattern": "^DELTA-[A-Z0-9-]+$" },
+        "chain_ids": { "$ref": "#/$defs/stringArray" },
+        "target": { "$ref": "#/$defs/targetRef" },
+        "primary_dimension": { "$ref": "#/$defs/nonEmptyString" },
+        "expected_boundary": { "$ref": "#/$defs/nonEmptyString" },
+        "static_integration_state": { "$ref": "#/$defs/nonEmptyString" },
+        "changed": { "enum": [true, false, "unknown"] },
+        "comparison_basis": { "$ref": "#/$defs/nonEmptyString" },
+        "integration_relevance": { "$ref": "#/$defs/nonEmptyString" },
+        "evidence_ids": { "$ref": "#/$defs/stringArray" },
+        "gap_ids": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_id", "title", "status", "preliminary_severity", "source_confidence", "verification_priority", "actor_id", "controlled_source", "target", "chain_ids", "guard_ids", "delta_ids", "boundary_crossed", "root_cause", "root_cause_owner", "integration_relevance", "possible_impact", "evidence_ids", "deployment_conditions", "manual_verification"],
+      "properties": {
+        "candidate_id": { "type": "string", "pattern": "^CAND-[A-Z0-9-]+$" },
+        "title": { "$ref": "#/$defs/nonEmptyString" },
+        "status": { "enum": ["source_supported_candidate", "deployment_dependent_candidate"] },
+        "preliminary_severity": { "enum": ["Critical", "High", "Medium", "Low"] },
+        "source_confidence": { "enum": ["High", "Medium"] },
+        "verification_priority": { "enum": ["P0", "P1", "P2", "P3"] },
+        "actor_id": { "type": "string", "pattern": "^ACTOR-[A-Z0-9-]+$" },
+        "controlled_source": { "$ref": "#/$defs/nonEmptyString" },
+        "target": { "$ref": "#/$defs/targetRef" },
+        "chain_ids": { "allOf": [{ "$ref": "#/$defs/stringArray" }, { "minItems": 1 }] },
+        "guard_ids": { "allOf": [{ "$ref": "#/$defs/stringArray" }, { "minItems": 1 }] },
+        "delta_ids": { "allOf": [{ "$ref": "#/$defs/stringArray" }, { "minItems": 1 }] },
+        "boundary_crossed": { "$ref": "#/$defs/nonEmptyString" },
+        "root_cause": { "$ref": "#/$defs/nonEmptyString" },
+        "root_cause_owner": { "enum": ["platform", "component", "adapter_controller", "deployment", "shared", "unknown"] },
+        "integration_relevance": { "$ref": "#/$defs/nonEmptyString" },
+        "possible_impact": { "allOf": [{ "$ref": "#/$defs/stringArray" }, { "minItems": 1 }] },
+        "evidence_ids": { "allOf": [{ "$ref": "#/$defs/stringArray" }, { "minItems": 1 }] },
+        "deployment_conditions": { "$ref": "#/$defs/stringArray" },
+        "manual_verification": { "$ref": "#/$defs/manualVerification" }
+      }
+    },
+    "manualVerification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["environment", "steps", "positive_signals", "negative_signals", "evidence_to_collect", "prohibited_actions"],
+      "properties": {
+        "environment": { "$ref": "#/$defs/nonEmptyString" },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["order", "action"],
+            "properties": {
+              "order": { "type": "integer", "minimum": 1 },
+              "action": { "$ref": "#/$defs/nonEmptyString" }
+            }
+          }
+        },
+        "positive_signals": { "allOf": [{ "$ref": "#/$defs/stringArray" }, { "minItems": 1 }] },
+        "negative_signals": { "allOf": [{ "$ref": "#/$defs/stringArray" }, { "minItems": 1 }] },
+        "evidence_to_collect": { "allOf": [{ "$ref": "#/$defs/stringArray" }, { "minItems": 1 }] },
+        "prohibited_actions": { "allOf": [{ "$ref": "#/$defs/stringArray" }, { "minItems": 1 }] }
+      }
+    },
+    "researchLead": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lead_id", "summary", "unresolved_gap_ids", "promotion_condition"],
+      "properties": {
+        "lead_id": { "type": "string", "pattern": "^LEAD-[A-Z0-9-]+$" },
+        "summary": { "$ref": "#/$defs/nonEmptyString" },
+        "unresolved_gap_ids": { "$ref": "#/$defs/stringArray" },
+        "promotion_condition": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "gap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gap_id", "description", "affected_scope", "blocks_candidate_ids"],
+      "properties": {
+        "gap_id": { "type": "string", "pattern": "^GAP-[A-Z0-9-]+$" },
+        "description": { "$ref": "#/$defs/nonEmptyString" },
+        "affected_scope": { "$ref": "#/$defs/stringArray" },
+        "blocks_candidate_ids": { "$ref": "#/$defs/stringArray" }
+      }
+    }
+  }
+}

@@ -1,67 +1,54 @@
 {
   "owner": "JR-Agent-Skills",
   "slug": "aiml-interface-boundary-scan",
-  "displayName": "AI/ML Interface Boundary Scan",
-  "description": "Resolve direct and indirect integration topology, component/GPU/platform-operation targets, delegated identity and parameter/resource ownership chains, runtime privileges, integration deltas, and A1-A9 candidates with concise Chinese security reports.",
-  "version": "6.2.0",
+  "displayName": "AI/ML Interface Boundary Source Scan",
+  "description": "Statically trace direct and indirect GPU-platform integration chains, security guards, identity and parameter propagation, resource ownership, runtime privileges, and GPU boundaries to produce source-backed candidates with manual verification handoff.",
+  "version": "7.0.0",
   "tags": [
     "security",
+    "source-scan",
     "ai-ml",
     "mlops",
-    "interface-binding",
+    "integration-boundary",
     "integration-topology",
-    "delegation",
-    "managed-service",
     "reachability",
     "identity-policy",
     "parameter-flow",
     "resource-ownership",
-    "integration-delta",
-    "cve-triage",
+    "runtime-privilege",
     "gpu-security",
-    "device-node-isolation",
-    "runtime-overprivilege"
+    "manual-verification-handoff"
   ],
   "license": "MIT",
   "latest": {
-    "version": "6.2.0",
-    "publishedAt": 1787629200000
+    "version": "7.0.0",
+    "publishedAt": 1787713952656
   },
   "history": [
     {
-      "version": "6.2.0",
-      "publishedAt": 1787629200000,
-      "notes": "Reduce final output to two Chinese Markdown reports: a concise component boundary scan and a candidate vulnerability report containing description, attacker capability, root cause, reproduction environment, reproduction steps, and possible impact"
+      "version": "7.0.0",
+      "publishedAt": 1787713952656,
+      "notes": "Restrict the skill to deterministic static source discovery, separate human verification and CVE triage, consolidate duplicated specifications, unify CIFACE/GASSET/PSOP targets, and add a machine schema, validator, regression fixture, and mandatory manual-verification handoff"
     },
     {
-      "version": "6.1.0",
-      "publishedAt": 1787464800000,
-      "notes": "Standardize human-readable reports in Chinese and enforce a fixed CAND-AIML candidate format with expected/observed boundaries, evidence, evidence gaps, impact, false-positive conditions, safe validation, prohibited automated actions, and remediation guidance"
+      "version": "6.2.0",
+      "publishedAt": 1787629200000,
+      "notes": "Reduce final output to two Chinese Markdown reports"
     },
     {
       "version": "6.0.0",
       "publishedAt": 1787450400000,
-      "notes": "Add evidence-backed integration topology for indirect workflow/controller/SDK/managed-service integrations, PSOP platform operation targets, integration bridges, identity chains, parameter propagation, and resource ownership bindings"
+      "notes": "Add indirect workflow/controller/SDK/managed-service integrations and PSOP targets"
     },
     {
       "version": "5.0.0",
       "publishedAt": 1787270400000,
-      "notes": "Add Stage B effective runtime privilege bindings and Stage C caller/runtime privilege deltas with semantic host/device/RBAC comparison and ownership rules"
+      "notes": "Add effective runtime privilege bindings and privilege deltas"
     },
     {
       "version": "4.0.0",
       "publishedAt": 1787270400000,
-      "notes": "Add A9 accelerator device/node isolation, GPU assets, mandatory device/memory/partition/IPC/fabric/agent/driver coverage, and GPU-aware Stage B-D contracts"
-    },
-    {
-      "version": "3.0.0",
-      "publishedAt": 1787270400000,
-      "notes": "Make tenant GPU workload execution a default attacker origin and require cross-tenant, node-local, direct-cluster, control-plane, and non-network path coverage"
-    },
-    {
-      "version": "2.0.0",
-      "publishedAt": 1784822400000,
-      "notes": "Consume Stage A baselines and separate platform binding, reachability, identity/policy, integration delta, verification, and CVE triage"
+      "notes": "Add accelerator device and node isolation coverage"
     },
     {
       "version": "1.0.0",
